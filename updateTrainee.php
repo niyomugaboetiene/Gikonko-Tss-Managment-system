@@ -1,127 +1,310 @@
+
 <?php
-include('conn.php');
+include("conn.php");
 session_start();
 
 if (!isset($_SESSION['username'])) {
     $_SESSION['login_error'] = "Please login to access this page";
-    header("Location:login.php");
+    header("Location: login.php");
     exit();
 }
 
-// Handle select logic
-if (isset($_GET['Trainee_Id'])) {
-    $Trainee_Id = $_GET['Trainee_Id'];
+$error = "";
 
-    $sql = "SELECT t.Trainee_Id,
-                   t.Firstname,
-                   t.lastname,
-                   t.Gender,
-                   t.Trade_Id,
-                   td.Trade_Name
-            FROM trainees t 
-            JOIN trades td ON t.Trade_Id = td.Trade_Id
-            WHERE t.Trainee_Id = '$Trainee_Id'";
-    $query = mysqli_query($conn, $sql);
-
-    if ($query) {
-        $trainee = mysqli_fetch_assoc($query);
-    } else {
-        die("ERROR:" . mysqli_error($conn));
-    }
+if (!isset($_GET['Trainee_Id']) || !ctype_digit((string)$_GET['Trainee_Id'])) {
+    header("Location: listOfTrainee.php");
+    exit();
 }
 
-$error = "";
-// Handle update logic
+$Trainee_Id = (int)$_GET['Trainee_Id'];
+
+$stmt = mysqli_prepare($conn, "SELECT
+    t.Trainee_Id,
+    t.Firstname,
+    t.lastname,
+    t.Gender,
+    t.Trade_Id,
+    td.Trade_name
+    FROM trainees t
+    JOIN trades td ON t.Trade_Id = td.Trade_id
+    WHERE t.Trainee_Id = ?");
+
+mysqli_stmt_bind_param($stmt, "i", $Trainee_Id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+if (mysqli_num_rows($result) === 0) {
+    mysqli_stmt_close($stmt);
+    header("Location: listOfTrainee.php");
+    exit();
+}
+
+$trainee = mysqli_fetch_assoc($result);
+mysqli_stmt_close($stmt);
+
 if (isset($_POST['update'])) {
-    if (!empty($_POST['Firstname']) && !empty($_POST['lastname']) && !empty($_POST['Gender']) && !empty($_POST['Trade_Id'])) {
-        $FirstName = $_POST['Firstname'];
-        $lastname = $_POST['lastname'];
-        $Gender = $_POST['Gender'];
-        $Trade_Id = $_POST['Trade_Id'];
+    $FirstName = trim($_POST['Firstname'] ?? '');
+    $lastname = trim($_POST['lastname'] ?? '');
+    $Gender = trim($_POST['Gender'] ?? '');
+    $Trade_Id = trim($_POST['Trade_Id'] ?? '');
 
-        $sql = "UPDATE trainees SET 
-                    Firstname='$FirstName',
-                    lastname='$lastname',
-                    Gender='$Gender',
-                    Trade_Id='$Trade_Id'
-                WHERE Trainee_Id = $Trainee_Id";
-
-        $result = mysqli_query($conn, $sql);
-
-        if ($result) {
-            // Redirect after successful update
-            header("Location:listOfTrainee.php");
-            exit();
-        } else {
-            die("ERROR:" . mysqli_error($conn));
-        }
+    if (
+        $FirstName === '' ||
+        $lastname === '' ||
+        $Gender === '' ||
+        $Trade_Id === ''
+    ) {
+        $error = "Please fill in all required fields.";
+    } elseif (!in_array($Gender, ['male', 'female'], true)) {
+        $error = "Please select a valid gender.";
+    } elseif (!ctype_digit($Trade_Id)) {
+        $error = "Please select a valid trade.";
     } else {
-        $error = "Please fill out the empty space";
+        $checkTrade = mysqli_prepare(
+            $conn,
+            "SELECT Trade_id FROM trades WHERE Trade_id = ?"
+        );
+
+        mysqli_stmt_bind_param($checkTrade, "i", $Trade_Id);
+        mysqli_stmt_execute($checkTrade);
+        $tradeResult = mysqli_stmt_get_result($checkTrade);
+        $tradeExists = mysqli_num_rows($tradeResult) > 0;
+        mysqli_stmt_close($checkTrade);
+
+        if (!$tradeExists) {
+            $error = "The selected trade does not exist.";
+        } else {
+            $update = mysqli_prepare(
+                $conn,
+                "UPDATE trainees SET
+                    Firstname = ?,
+                    lastname = ?,
+                    Gender = ?,
+                    Trade_Id = ?
+                 WHERE Trainee_Id = ?"
+            );
+
+            mysqli_stmt_bind_param(
+                $update,
+                "sssii",
+                $FirstName,
+                $lastname,
+                $Gender,
+                $Trade_Id,
+                $Trainee_Id
+            );
+
+            if (mysqli_stmt_execute($update)) {
+                mysqli_stmt_close($update);
+                header("Location: listOfTrainee.php");
+                exit();
+            } else {
+                $error = "Unable to update trainee information. Please try again.";
+            }
+
+            mysqli_stmt_close($update);
+        }
     }
+
+    $trainee['Firstname'] = $FirstName;
+    $trainee['lastname'] = $lastname;
+    $trainee['Gender'] = $Gender;
+    $trainee['Trade_Id'] = $Trade_Id;
+}
+
+function escapeTrainee($value) {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+$trades = mysqli_query(
+    $conn,
+    "SELECT Trade_id, Trade_name FROM trades ORDER BY Trade_name ASC"
+);
+
+if (!$trades) {
+    die("Unable to load trade information.");
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
-   <title>Update <?php echo $trainee['Firstname']; ?></title>
-   <link href="output.css" rel="stylesheet" />
-   <link rel="icon" type="/png" href="gikonko.png" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Trainee | GIKONKO TSS</title>
+    <link href="output.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="gikonko.png">
 </head>
 
-<body class="min-h-screen bg-green-100">
+<body class="min-h-screen bg-slate-50 flex flex-col">
 
+    <header class="w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+        <?php include("Dashboard.php"); ?>
+    </header>
 
-   <div class="w-full fixed top-0 left-0 z-10">
-      <?php include("Dashboard.php"); ?>
-   </div>
+    <main class="flex-grow w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        <div class="mb-8">
+            <p class="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+                Student Management
+            </p>
 
-   <main class="flex justify-center items-center min-h-screen pt-32">
-      <form action="" method="post" class="bg-blue-700 p-8 max-w-lg w-full rounded-lg shadow-2xl">
-         <h1 class="text-center text-green-500 text-xl underline mb-6">Update <?php echo $trainee['Firstname']; ?></h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">
+                Update Trainee
+            </h1>
 
-         <label class="text-lg text-green-500 font-semibold">Trainee Code</label>
-         <input type="text" name="Trainee_Id" value="<?php echo $trainee['Trainee_Id']; ?>" readonly
-            class="w-[75%] px-3 py-2 bg-blue-200 rounded-lg focus:outline-none text-blue-500 focus:ring-2 mb-6" /> <br>
+            <p class="text-sm text-slate-500 mt-2">
+                Edit trainee personal information and assigned trade.
+            </p>
+        </div>
 
-         <label class="text-lg text-green-500 font-semibold">First Name</label>
-         <input type="text" name="Firstname" value="<?php echo $trainee['Firstname']; ?>"
-            class="w-[74.7%] py-2 px-3 ms-5 bg-blue-200 rounded-lg focus:outline-none text-blue-500 focus:ring-2 mb-6" /> <br>
+        <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
 
-         <label class="text-lg text-green-500 font-semibold">Last Name</label>
-         <input type="text" name="lastname" value="<?php echo $trainee['lastname']; ?>"
-            class="w-[75%] py-2 px-3 bg-blue-200 ms-5 rounded-lg focus:outline-none text-blue-500 focus:ring-2 mb-6" /> <br>
+            <div class="px-6 py-5 border-b border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-800">
+                    Trainee Information
+                </h2>
 
-         <label class="text-lg text-green-500 font-semibold">Gender</label>
-         <input type="text" name="Gender" value="<?php echo $trainee['Gender']; ?>"
-            class="w-[75%] py-2 px-3 bg-blue-200 ms-[10%] rounded-lg focus:outline-none text-blue-500 focus:ring-2 mb-6" /> <br>
-
-         <label class="text-lg text-green-500 font-semibold">Trade Code</label>
-         <input type="text" name="Trade_Id" value="<?php echo $trainee['Trade_Id']; ?>"
-            class="w-[75%] py-2 px-3 ms-3 bg-blue-200 rounded-lg focus:outline-none text-blue-500 focus:ring-2 mb-6" /> <br>
-
-         <label class="text-lg text-green-500 font-semibold">Trade Name</label>
-         <input type="text" name="Trade_Name" value="<?php echo $trainee['Trade_Name']; ?>" readonly
-            class="w-[75%] py-2 ms-2 px-3 bg-blue-200 rounded-lg focus:outline-none text-blue-500 focus:ring-2 mb-6" /> <br>
-
-         <div class="flex justify-between mb-6">
-            <button name="update" class="px-8 py-2 bg-green-500 rounded-lg text-white font-semibold hover:bg-green-600 shadow-lg">Save Changes</button>
-            <a href="listOfTrainee.php" class="px-8 me-2 py-2 bg-red-500 rounded-lg text-white font-semibold hover:bg-red-600 shadow-lg">← Back</a>
-         </div>
-
-         <?php if (!empty($error)): ?>
-            <div class="py-1 text-red-500 px-1">
-               <?php echo $error; ?>
+                <p class="text-sm text-slate-500 mt-1">
+                    Trainee record #<?php echo escapeTrainee($trainee['Trainee_Id']); ?>
+                </p>
             </div>
-         <?php endif; ?>
-      </form>
-   </main>
 
-       <footer class="bg-blue-500 text-center py-4 shadow-inner text-sm text-white fixed bottom-0 w-full">
-          &copy; <?php echo date("Y"); ?> GIKONKO TSS. All rights reserved.
-  </footer>
+            <form method="POST" class="p-6 space-y-6">
+
+                <?php if ($error !== ''): ?>
+                    <div class="p-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+                        <?php echo escapeTrainee($error); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div>
+                    <label for="Trainee_Id" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Trainee Code
+                    </label>
+
+                    <input
+                        type="text"
+                        id="Trainee_Id"
+                        value="<?php echo escapeTrainee($trainee['Trainee_Id']); ?>"
+                        readonly
+                        class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-md text-slate-500 cursor-not-allowed"
+                    >
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                    <div>
+                        <label for="Firstname" class="block text-sm font-semibold text-slate-700 mb-2">
+                            First Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="Firstname"
+                            name="Firstname"
+                            value="<?php echo escapeTrainee($trainee['Firstname']); ?>"
+                            placeholder="Enter first name"
+                            maxlength="100"
+                            required
+                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="lastname" class="block text-sm font-semibold text-slate-700 mb-2">
+                            Last Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="lastname"
+                            name="lastname"
+                            value="<?php echo escapeTrainee($trainee['lastname']); ?>"
+                            placeholder="Enter last name"
+                            maxlength="100"
+                            required
+                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                    </div>
+
+                </div>
+
+                <div>
+                    <label for="Gender" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Gender
+                    </label>
+
+                    <select
+                        id="Gender"
+                        name="Gender"
+                        required
+                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Select gender</option>
+                        <option value="male" <?php echo strtolower($trainee['Gender']) === 'male' ? 'selected' : ''; ?>>
+                            Male
+                        </option>
+                        <option value="female" <?php echo strtolower($trainee['Gender']) === 'female' ? 'selected' : ''; ?>>
+                            Female
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="Trade_Id" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Assigned Trade
+                    </label>
+
+                    <select
+                        id="Trade_Id"
+                        name="Trade_Id"
+                        required
+                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Select a trade</option>
+
+                        <?php while ($trade = mysqli_fetch_assoc($trades)): ?>
+                            <option
+                                value="<?php echo escapeTrainee($trade['Trade_id']); ?>"
+                                <?php echo (string)$trainee['Trade_Id'] === (string)$trade['Trade_id'] ? 'selected' : ''; ?>
+                            >
+                                <?php echo escapeTrainee($trade['Trade_name']); ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+                    <p class="text-sm text-slate-600">
+                        <span class="font-semibold text-slate-800">Note:</span>
+                        Changing the assigned trade will update the trade associated with this trainee.
+                    </p>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+
+                    <a href="listOfTrainee.php"
+                       class="inline-flex justify-center items-center px-5 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-md hover:bg-slate-100 transition">
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        name="update"
+                        class="inline-flex justify-center items-center px-5 py-2.5 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 transition"
+                    >
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+        </section>
+
+    </main>
+
+    <?php include("footer.php"); ?>
+
 </body>
 </html>
