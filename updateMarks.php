@@ -1,152 +1,407 @@
+
 <?php
-   include('conn.php');
-   session_start();
+include("conn.php");
+session_start();
 
-   if (!isset($_SESSION['username'])) {
-       $_SESSION['login_error'] = "Please login to access this page";
-       header("Location:login.php");
-       exit();
-   }   
-   if (isset($_GET['Mark_Id'])) {
-       $Mark_Id = $_GET['Mark_Id'];
+if (!isset($_SESSION['username'])) {
+    $_SESSION['login_error'] = "Please login to access this page";
+    header("Location: login.php");
+    exit();
+}
 
-       $sql = "SELECT m.Mark_Id,
-                m.Trainee_Id, 
-                m.Module_Id,
-                m.Formative_Assessment,
-                m.Summative_Assessment,
-                m.Total_Marks,
-                m.decision, md.Module_Name FROM marks m 
-               JOIN modules md ON m.Module_Id = md.Module_Id  WHERE Mark_Id = '$Mark_Id'";
-       $result = mysqli_query($conn, $sql);
-     
-       if (mysqli_num_rows($result) > 0 ) {
-            $data = mysqli_fetch_assoc($result);
+$error = "";
+$data = null;
+
+if (!isset($_GET['Mark_Id']) || !ctype_digit((string)$_GET['Mark_Id'])) {
+    header("Location: listOfMarks.php");
+    exit();
+}
+
+$Mark_Id = (int)$_GET['Mark_Id'];
+
+$stmt = mysqli_prepare($conn, "SELECT
+    m.Mark_Id,
+    m.Trainee_Id,
+    m.Module_Id,
+    m.Formative_Assessment,
+    m.Summative_Assessment,
+    m.Total_Marks,
+    m.decision
+    FROM marks m
+    WHERE m.Mark_Id = ?");
+
+mysqli_stmt_bind_param($stmt, "i", $Mark_Id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+if (mysqli_num_rows($result) === 0) {
+    mysqli_stmt_close($stmt);
+    header("Location: listOfMarks.php");
+    exit();
+}
+
+$data = mysqli_fetch_assoc($result);
+mysqli_stmt_close($stmt);
+
+if (isset($_POST['save'])) {
+    $trainee_code = trim($_POST['Trainee_Id'] ?? '');
+    $Module_Id = trim($_POST['Module_Id'] ?? '');
+    $Formative = trim($_POST['Formative_Assessment'] ?? '');
+    $Summative = trim($_POST['Summative_Assessment'] ?? '');
+
+    if (
+        $trainee_code === '' ||
+        $Module_Id === '' ||
+        $Formative === '' ||
+        $Summative === ''
+    ) {
+        $error = "Please fill in all required fields.";
+    } elseif (
+        !ctype_digit($trainee_code) ||
+        !ctype_digit($Module_Id) ||
+        !is_numeric($Formative) ||
+        !is_numeric($Summative)
+    ) {
+        $error = "Please enter valid trainee, module and mark values.";
+    } elseif (
+        (float)$Formative < 0 ||
+        (float)$Formative > 50 ||
+        (float)$Summative < 0 ||
+        (float)$Summative > 50
+    ) {
+        $error = "Each assessment mark must be between 0 and 50.";
+    } else {
+        $Formative = (float)$Formative;
+        $Summative = (float)$Summative;
+        $Total = $Formative + $Summative;
+        $Decision = $Total >= 70 ? "Competent" : "Not Competent";
+
+        $checkTrainee = mysqli_prepare($conn, "SELECT Trainee_Id FROM trainees WHERE Trainee_Id = ?");
+        mysqli_stmt_bind_param($checkTrainee, "i", $trainee_code);
+        mysqli_stmt_execute($checkTrainee);
+        $traineeResult = mysqli_stmt_get_result($checkTrainee);
+        $traineeExists = mysqli_num_rows($traineeResult) > 0;
+        mysqli_stmt_close($checkTrainee);
+
+        $checkModule = mysqli_prepare($conn, "SELECT Module_Id FROM modules WHERE Module_Id = ?");
+        mysqli_stmt_bind_param($checkModule, "i", $Module_Id);
+        mysqli_stmt_execute($checkModule);
+        $moduleResult = mysqli_stmt_get_result($checkModule);
+        $moduleExists = mysqli_num_rows($moduleResult) > 0;
+        mysqli_stmt_close($checkModule);
+
+        if (!$traineeExists) {
+            $error = "The selected trainee does not exist.";
+        } elseif (!$moduleExists) {
+            $error = "The selected module does not exist.";
         } else {
-            echo "User Not Found";
+            $update = mysqli_prepare($conn, "UPDATE marks SET
+                Trainee_Id = ?,
+                Module_Id = ?,
+                Formative_Assessment = ?,
+                Summative_Assessment = ?,
+                Total_Marks = ?,
+                decision = ?
+                WHERE Mark_Id = ?");
+
+            mysqli_stmt_bind_param(
+                $update,
+                "iidddsi",
+                $trainee_code,
+                $Module_Id,
+                $Formative,
+                $Summative,
+                $Total,
+                $Decision,
+                $Mark_Id
+            );
+
+            if (mysqli_stmt_execute($update)) {
+                mysqli_stmt_close($update);
+                header("Location: listOfMarks.php");
+                exit();
+            } else {
+                $error = "Unable to update marks. Please try again.";
+            }
+
+            mysqli_stmt_close($update);
         }
-   }
+    }
 
-   $error = "";     
-   if (isset($_POST['save'])) {
-      if (!empty($_POST['Trainee_Id']) && !empty($_POST['Module_Id']) && !empty($_POST['Formative_Assessment']) && !empty($_POST['Summative_Assessment'])) {
-          $Mark_Id = $_POST['Mark_Id'];
-          $trainee_code = $_POST['Trainee_Id'];
-          $Module_Id = $_POST['Module_Id'];
-          $Formative = $_POST['Formative_Assessment'];
-          $Summative = $_POST['Summative_Assessment'];
+    $data['Trainee_Id'] = $trainee_code;
+    $data['Module_Id'] = $Module_Id;
+    $data['Formative_Assessment'] = $Formative;
+    $data['Summative_Assessment'] = $Summative;
+    $data['Total_Marks'] = is_numeric($Formative) && is_numeric($Summative)
+        ? (float)$Formative + (float)$Summative
+        : $data['Total_Marks'];
+}
 
-          $Total = $Formative + $Summative;
-          $Decision = ($Total) >= 70 ? "Competent" : "Not Competent";
+function escapeMarks($value) {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
 
-          $sql = "UPDATE marks SET 
-                 Mark_Id = '$Mark_Id',
-                 Trainee_Id = '$trainee_code',
-                 Module_Id = '$Module_Id',
-                 Formative_Assessment = '$Formative',
-                 Summative_Assessment = '$Summative',
-                 Total_Marks = '$Total',
-                 decision = '$Decision'
-                 WHERE Mark_Id = '$Mark_Id'
-          ";
-          $query = mysqli_query($conn, $sql);
+$trainees = mysqli_query(
+    $conn,
+    "SELECT Trainee_Id, CONCAT(Firstname, ' ', lastname) AS Trainee_Name
+     FROM trainees
+     ORDER BY Firstname ASC"
+);
 
-          if ($query) {
-            header("Location:listOfMarks.php");
-          } else {
-            die("ERROR:" . mysqli_error($conn));
-          }
-      } else {
-          $error = "Please fill out empty space";
-      }
-   }
+$modules = mysqli_query(
+    $conn,
+    "SELECT Module_Id, Module_Name
+     FROM modules
+     ORDER BY Module_Name ASC"
+);
+
+if (!$trainees || !$modules) {
+    die("Unable to load trainee or module information.");
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Update Marks Table</title>
-    <link href="output.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Marks | GIKONKO TSS</title>
+    <link href="output.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="gikonko.png">
 </head>
-<body class="min-h-screen bg-blue-300 flex flex-col">
 
-  <div class="w-full">
-    <?php include("Dashboard.php"); ?>
-  </div>
+<body class="min-h-screen bg-slate-50 flex flex-col">
 
+    <header class="w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+        <?php include("Dashboard.php"); ?>
+    </header>
 
-  <main class="flex-grow flex justify-center items-center p-9">
-    <form method="post" class="max-w-md w-full bg-green-400 p-9 rounded-lg shadow-2xl">
-      <input type="hidden" name="Mark_Id" value="<?php echo $data['Mark_Id']; ?>">
-           <label for="Trainee_Id" class="block mb-1 font-semibold text-blue-700">Trainee Name</label>
-           <select name="Trainee_Id_Select" id="Trainee_Id_Select" required
-                class="w-full py-2 rounded-lg shadow-lg bg-green-200 text-green-700 focus:ring-2 focus:ring-green-400 focus:outline-none">
-                <option value="" disabled selected>Select Trainee</option>
-                    <?php
-                       $sql = "SELECT Trainee_id, CONCAT(Firstname, ' ', Lastname) AS Trainee_Name FROM trainees";
-                       $query = mysqli_query($conn, $sql);
-                       while ($data1 = mysqli_fetch_assoc($query)) {
-                              echo "<option value='" . $data1['Trainee_id'] . "' data-id='" . $data1['Trainee_id'] . "'>" . $data1['Trainee_Name'] . "</option>";
-                       }
-                    ?>
-   </select>
-        <label class="text-md text-blue-700 font-bold block">Trainee Code</label>
-        <input type="text" name="Trainee_Id" id="Trainee_Id"
-         class="w-full py-2 rounded-lg shadow-lg bg-green-200 text-green-500 focus:ring-2 focus:outline-green-400 " readonly> <br>
+    <main class="flex-grow w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        <label class="text-md text-blue-700 font-bold block">Module Code</label>
-                <select id="Module_Id" name="Module_Id"
-                    class="w-full py-2 rounded-lg shadow-lg bg-green-200 text-green-700 focus:ring-2 focus:ring-green-400 focus:outline-none"    required>
-                    <option value="" disabled selected>Select Module</option>
-                    <?php
-                        $sql = "SELECT * FROM modules";
-                        $query = mysqli_query($conn, $sql);
-                        while ($data2 = mysqli_fetch_assoc($query)) {
-                            echo "<option value='" . $data2['Module_Id'] . "'>" . $data2['Module_Name'] . "</option>";
-                        }
-                    ?>
-                </select>
-        <label class="text-md text-blue-700 font-bold block">Formative Assessment /50</label>
-        <input type="text" name="Formative_Assessment" value="<?php echo $data['Formative_Assessment']; ?>"
-        class="w-full py-2 rounded-lg shadow-lg bg-green-200 text-green-500 focus:ring-2 focus:outline-green-400"> <br>
+        <div class="mb-8">
+            <p class="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+                Academic Management
+            </p>
 
-        <label class="text-md text-blue-700 font-bold block">Summative Assessment /50</label>
-        <input type="text" name="Summative_Assessment" value="<?php echo $data['Summative_Assessment']; ?>"
-        class="w-full py-2 rounded-lg shadow-lg bg-green-200 text-green-500 focus:ring-2 focus:outline-green-400 mb-4"> <br>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">
+                Update Assessment Marks
+            </h1>
 
-        <div class="flex justify-between mb-4">
-             <button name="save" class="bg-blue-500 py-2 px-5 text-white rounded-lg shadow-xl hover:bg-blue-600 transition duration-200">Save Marks</button>
-             <a href="listOfMarks.php" class="bg-red-500 py-2 px-5 text-white rounded-lg shadow-xl hover:bg-red-600 transition duration-200">← Back</a>
+            <p class="text-sm text-slate-500 mt-2">
+                Edit trainee assessment information and update the competency result.
+            </p>
         </div>
-      
-       <?php if (!empty($error)): ?>
-          <div class="py-1 text-red-500 px-1">
-              <?php echo $error; ?>
-          </div>
-       <?php endif; ?>   
-    </form>
-  </main>
 
-  <script>
-  
-  // this helps to fetch all data in select option, function runs every time user changed an option
-   document.getElementById('Trainee_Id_Select').addEventListener('change', function () {
-    
-   // helps to get options data and their index
-    const selectedOption = this.options[this.selectedIndex];
-    
-    // fetch Id from the trainee by using data-id
-    const traineeCode = selectedOption.getAttribute('data-id');
-    
-    // Store it in the traineeId which is the trainee Field
-    document.getElementById('Trainee_Id').value = traineeCode;
-});
-</script>
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
 
-    <footer class="bg-blue-500 text-center py-4 shadow-inner text-sm text-white fixed bottom-0 w-full">
-          &copy; <?php echo date("Y"); ?> GIKONKO TSS. All rights reserved.
-  </footer>
+            <div class="px-6 py-5 border-b border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-800">
+                    Assessment Information
+                </h2>
+
+                <p class="text-sm text-slate-500 mt-1">
+                    Mark record #<?php echo escapeMarks($data['Mark_Id']); ?>
+                </p>
+            </div>
+
+            <form method="POST" class="p-6 space-y-6">
+
+                <?php if ($error !== ''): ?>
+                    <div class="p-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+                        <?php echo escapeMarks($error); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div>
+                    <label for="Trainee_Id_Select" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Select Trainee
+                    </label>
+
+                    <select
+                        id="Trainee_Id_Select"
+                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                    >
+                        <option value="">Select a trainee</option>
+
+                        <?php while ($trainee = mysqli_fetch_assoc($trainees)): ?>
+                            <option
+                                value="<?php echo escapeMarks($trainee['Trainee_Id']); ?>"
+                                <?php echo (string)$data['Trainee_Id'] === (string)$trainee['Trainee_Id'] ? 'selected' : ''; ?>
+                            >
+                                <?php echo escapeMarks($trainee['Trainee_Name']); ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+
+                    <input
+                        type="hidden"
+                        name="Trainee_Id"
+                        id="Trainee_Id"
+                        value="<?php echo escapeMarks($data['Trainee_Id']); ?>"
+                    >
+                </div>
+
+                <div>
+                    <label for="Module_Id" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Select Module
+                    </label>
+
+                    <select
+                        id="Module_Id"
+                        name="Module_Id"
+                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                    >
+                        <option value="">Select a module</option>
+
+                        <?php while ($module = mysqli_fetch_assoc($modules)): ?>
+                            <option
+                                value="<?php echo escapeMarks($module['Module_Id']); ?>"
+                                <?php echo (string)$data['Module_Id'] === (string)$module['Module_Id'] ? 'selected' : ''; ?>
+                            >
+                                <?php echo escapeMarks($module['Module_Name']); ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                    <div>
+                        <label for="Formative_Assessment" class="block text-sm font-semibold text-slate-700 mb-2">
+                            Formative Assessment
+                            <span class="text-slate-400 font-normal">/ 50</span>
+                        </label>
+
+                        <input
+                            type="number"
+                            id="Formative_Assessment"
+                            name="Formative_Assessment"
+                            min="0"
+                            max="50"
+                            step="0.01"
+                            value="<?php echo escapeMarks($data['Formative_Assessment']); ?>"
+                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="Summative_Assessment" class="block text-sm font-semibold text-slate-700 mb-2">
+                            Summative Assessment
+                            <span class="text-slate-400 font-normal">/ 50</span>
+                        </label>
+
+                        <input
+                            type="number"
+                            id="Summative_Assessment"
+                            name="Summative_Assessment"
+                            min="0"
+                            max="50"
+                            step="0.01"
+                            value="<?php echo escapeMarks($data['Summative_Assessment']); ?>"
+                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-5">
+
+                    <p class="text-sm font-semibold text-slate-700 mb-3">
+                        Assessment Summary
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase tracking-wide">
+                                Total Marks
+                            </p>
+
+                            <p class="text-3xl font-bold text-slate-800 mt-1">
+                                <span id="totalMarks"><?php echo escapeMarks($data['Total_Marks']); ?></span>
+                                <span class="text-base font-medium text-slate-400">/ 100</span>
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase tracking-wide mb-2">
+                                Competency Decision
+                            </p>
+
+                            <span
+                                id="decisionBadge"
+                                class="inline-flex px-3 py-1.5 rounded-full text-sm font-semibold"
+                            >
+                                <?php echo escapeMarks($data['Total_Marks'] >= 70 ? 'Competent' : 'Not Competent'); ?>
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+
+                    <a href="listOfMarks.php"
+                       class="inline-flex justify-center items-center px-5 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-md hover:bg-slate-100 transition">
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        name="save"
+                        class="inline-flex justify-center items-center px-5 py-2.5 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 transition"
+                    >
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+
+    <?php include("footer.php"); ?>
+
+    <script>
+        const traineeSelect = document.getElementById('Trainee_Id_Select');
+        const traineeInput = document.getElementById('Trainee_Id');
+
+        const formativeInput = document.getElementById('Formative_Assessment');
+        const summativeInput = document.getElementById('Summative_Assessment');
+
+        const totalMarks = document.getElementById('totalMarks');
+        const decisionBadge = document.getElementById('decisionBadge');
+
+        traineeSelect.addEventListener('change', function () {
+            traineeInput.value = this.value;
+        });
+
+        function updateAssessmentSummary() {
+            const formative = parseFloat(formativeInput.value) || 0;
+            const summative = parseFloat(summativeInput.value) || 0;
+
+            const total = formative + summative;
+            const competent = total >= 70;
+
+            totalMarks.textContent = total.toFixed(2).replace(/\.00$/, '');
+
+            decisionBadge.textContent = competent ? 'Competent' : 'Not Competent';
+
+            decisionBadge.className = competent
+                ? 'inline-flex px-3 py-1.5 rounded-full text-sm font-semibold bg-green-50 text-green-700'
+                : 'inline-flex px-3 py-1.5 rounded-full text-sm font-semibold bg-red-50 text-red-700';
+        }
+
+        formativeInput.addEventListener('input', updateAssessmentSummary);
+        summativeInput.addEventListener('input', updateAssessmentSummary);
+
+        updateAssessmentSummary();
+    </script>
+
 </body>
 </html>
