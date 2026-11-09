@@ -53,7 +53,7 @@ if (isset($_POST['login'])) {
      <?php endif; ?>  
      
         <h1 class="text-blue font-bold underline text-center text-blue-600 text-xl mb-6">Login Page</h1>
-        <label class="font-bold text-blue-500 text-lg">Username</label>
+        <label class="font-bold block text-blue-500 text-lg">Username</label>
         <input type="text" name="username" 
         class="w-[76%] py-3 rounded-lg bg-green-200 shadow-lg focus:ring-2 focus:outline-green-400 mb-6 text-green-500"> <br>
         <label  class="font-bold text-blue-500 text-lg">Password</label>
