@@ -62,6 +62,6 @@ try {
     $_SESSION['error'] = $e->getMessage();
 }
 
-header("Location:listOfModule.php");
+header("Location: listOfModule.php");
 exit();
 ?>
