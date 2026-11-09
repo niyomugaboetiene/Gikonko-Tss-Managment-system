@@ -621,16 +621,7 @@ $modulesQuery = mysqli_query(
     </main>
 
 
-    <!-- Footer -->
-    <footer class="mt-12 border-t border-slate-200
-                   bg-white py-5 text-center">
-
-        <p class="text-xs text-slate-500">
-            &copy; <?php echo date("Y"); ?>
-            GIKONKO TSS. All rights reserved.
-        </p>
-
-    </footer>
+<?php include("footer.php"); ?>
 
 
     <!-- JavaScript -->
