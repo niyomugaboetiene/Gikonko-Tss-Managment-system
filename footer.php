@@ -91,7 +91,7 @@
                 </p>
 
                 <p class="footer-developer">
-                    NIYOMUGABO Etiene
+                    <a style="hover:underline" href="https://niyomugaboetiene.vercel.app">NIYOMUGABO Etiene</a>
                 </p>
             </div>
 
