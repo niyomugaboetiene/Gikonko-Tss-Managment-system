@@ -1,6 +1,7 @@
 
 <?php
 include("conn.php");
+
 session_start();
 
 if (!isset($_SESSION['username'])) {
@@ -19,19 +20,28 @@ if (!isset($_GET['Mark_Id']) || !ctype_digit((string)$_GET['Mark_Id'])) {
 
 $Mark_Id = (int)$_GET['Mark_Id'];
 
-$stmt = mysqli_prepare($conn, "SELECT
-    m.Mark_Id,
-    m.Trainee_Id,
-    m.Module_Id,
-    m.Formative_Assessment,
-    m.Summative_Assessment,
-    m.Total_Marks,
-    m.decision
+$stmt = mysqli_prepare(
+    $conn,
+    "SELECT
+        m.Mark_Id,
+        m.Trainee_Id,
+        m.Module_Id,
+        m.Formative_Assessment,
+        m.Summative_Assessment,
+        m.Total_Marks,
+        m.decision
     FROM marks m
-    WHERE m.Mark_Id = ?");
+    WHERE m.Mark_Id = ?"
+);
+
+if (!$stmt) {
+    error_log("Marks query preparation failed: " . mysqli_error($conn));
+    die("Unable to load assessment information.");
+}
 
 mysqli_stmt_bind_param($stmt, "i", $Mark_Id);
 mysqli_stmt_execute($stmt);
+
 $result = mysqli_stmt_get_result($stmt);
 
 if (mysqli_num_rows($result) === 0) {
@@ -73,21 +83,34 @@ if (isset($_POST['save'])) {
     } else {
         $Formative = (float)$Formative;
         $Summative = (float)$Summative;
+
         $Total = $Formative + $Summative;
         $Decision = $Total >= 70 ? "Competent" : "Not Competent";
 
-        $checkTrainee = mysqli_prepare($conn, "SELECT Trainee_Id FROM trainees WHERE Trainee_Id = ?");
+        $checkTrainee = mysqli_prepare(
+            $conn,
+            "SELECT Trainee_Id FROM trainees WHERE Trainee_Id = ?"
+        );
+
         mysqli_stmt_bind_param($checkTrainee, "i", $trainee_code);
         mysqli_stmt_execute($checkTrainee);
+
         $traineeResult = mysqli_stmt_get_result($checkTrainee);
         $traineeExists = mysqli_num_rows($traineeResult) > 0;
+
         mysqli_stmt_close($checkTrainee);
 
-        $checkModule = mysqli_prepare($conn, "SELECT Module_Id FROM modules WHERE Module_Id = ?");
+        $checkModule = mysqli_prepare(
+            $conn,
+            "SELECT Module_Id FROM modules WHERE Module_Id = ?"
+        );
+
         mysqli_stmt_bind_param($checkModule, "i", $Module_Id);
         mysqli_stmt_execute($checkModule);
+
         $moduleResult = mysqli_stmt_get_result($checkModule);
         $moduleExists = mysqli_num_rows($moduleResult) > 0;
+
         mysqli_stmt_close($checkModule);
 
         if (!$traineeExists) {
@@ -95,14 +118,17 @@ if (isset($_POST['save'])) {
         } elseif (!$moduleExists) {
             $error = "The selected module does not exist.";
         } else {
-            $update = mysqli_prepare($conn, "UPDATE marks SET
-                Trainee_Id = ?,
-                Module_Id = ?,
-                Formative_Assessment = ?,
-                Summative_Assessment = ?,
-                Total_Marks = ?,
-                decision = ?
-                WHERE Mark_Id = ?");
+            $update = mysqli_prepare(
+                $conn,
+                "UPDATE marks SET
+                    Trainee_Id = ?,
+                    Module_Id = ?,
+                    Formative_Assessment = ?,
+                    Summative_Assessment = ?,
+                    Total_Marks = ?,
+                    decision = ?
+                WHERE Mark_Id = ?"
+            );
 
             mysqli_stmt_bind_param(
                 $update,
@@ -132,6 +158,7 @@ if (isset($_POST['save'])) {
     $data['Module_Id'] = $Module_Id;
     $data['Formative_Assessment'] = $Formative;
     $data['Summative_Assessment'] = $Summative;
+
     $data['Total_Marks'] = is_numeric($Formative) && is_numeric($Summative)
         ? (float)$Formative + (float)$Summative
         : $data['Total_Marks'];
@@ -156,6 +183,7 @@ $modules = mysqli_query(
 );
 
 if (!$trainees || !$modules) {
+    error_log("Unable to load trainee or module information: " . mysqli_error($conn));
     die("Unable to load trainee or module information.");
 }
 ?>
@@ -165,61 +193,364 @@ if (!$trainees || !$modules) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Update Marks | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
+
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .main-content {
+            flex: 1;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 38px 24px 50px;
+        }
+
+        .page-heading {
+            margin-bottom: 28px;
+        }
+
+        .page-eyebrow {
+            display: inline-block;
+            margin-bottom: 10px;
+            color: #2563eb;
+            font-size: 11px;
+            font-weight: 750;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .page-heading h1 {
+            color: #1e293b;
+            font-size: 28px;
+            font-weight: 750;
+            letter-spacing: -0.7px;
+        }
+
+        .page-heading p {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .assessment-card {
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 5px 18px rgba(15, 23, 42, 0.035);
+        }
+
+        .card-header {
+            padding: 22px 26px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .card-header h2 {
+            color: #1e293b;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .card-header p {
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .record-id {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 11px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .form-content {
+            padding: 28px 26px;
+        }
+
+        .form-group {
+            margin-bottom: 23px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 9px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .label-hint {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        input,
+        select {
+            width: 100%;
+            height: 47px;
+            padding: 0 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            outline: none;
+            background: #ffffff;
+            color: #334155;
+            font-family: inherit;
+            font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .error-message {
+            padding: 14px 16px;
+            margin-bottom: 24px;
+            border: 1px solid #fecaca;
+            border-radius: 7px;
+            background: #fef2f2;
+            color: #b91c1c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .summary-panel {
+            margin-top: 4px;
+            margin-bottom: 28px;
+            padding: 23px;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            background: #f8fafc;
+        }
+
+        .summary-panel h3 {
+            margin-bottom: 21px;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .summary-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .summary-label {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 650;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .total-value {
+            margin-top: 8px;
+            color: #1e293b;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .total-value small {
+            color: #94a3b8;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0;
+        }
+
+        .decision-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 9px;
+            padding: 8px 13px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .decision-badge.competent {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .decision-badge.not-competent {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            padding-top: 5px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 43px;
+            padding: 0 21px;
+            border-radius: 7px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-cancel {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .btn-save {
+            border: 1px solid #1d4ed8;
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .btn-save:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        @media (max-width: 650px) {
+            .main-content {
+                padding: 28px 15px 38px;
+            }
+
+            .page-heading h1 {
+                font-size: 23px;
+            }
+
+            .card-header,
+            .form-content {
+                padding: 21px 18px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .summary-panel {
+                padding: 19px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .summary-content {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 22px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body>
 
-    <header class="w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="flex-grow w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="main-content">
 
-        <div class="mb-8">
-            <p class="text-sm font-semibold text-blue-700 uppercase tracking-wide">
-                Academic Management
-            </p>
+        <div class="page-heading">
+            <span class="page-eyebrow">Academic Management</span>
 
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">
-                Update Assessment Marks
-            </h1>
+            <h1>Update Assessment Marks</h1>
 
-            <p class="text-sm text-slate-500 mt-2">
+            <p>
                 Edit trainee assessment information and update the competency result.
             </p>
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <section class="assessment-card">
 
-            <div class="px-6 py-5 border-b border-slate-200">
-                <h2 class="text-lg font-semibold text-slate-800">
-                    Assessment Information
-                </h2>
+            <div class="card-header">
+                <h2>Assessment Information</h2>
 
-                <p class="text-sm text-slate-500 mt-1">
-                    Mark record #<?php echo escapeMarks($data['Mark_Id']); ?>
+                <p>
+                    Edit the assessment record and review the updated marks.
                 </p>
+
+                <span class="record-id">
+                    Record #<?php echo escapeMarks($data['Mark_Id']); ?>
+                </span>
             </div>
 
-            <form method="POST" class="p-6 space-y-6">
+            <form method="POST" class="form-content">
 
                 <?php if ($error !== ''): ?>
-                    <div class="p-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+                    <div class="error-message">
                         <?php echo escapeMarks($error); ?>
                     </div>
                 <?php endif; ?>
 
-                <div>
-                    <label for="Trainee_Id_Select" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Select Trainee
-                    </label>
+                <div class="form-group">
+                    <label for="Trainee_Id_Select">Select Trainee</label>
 
                     <select
                         id="Trainee_Id_Select"
-                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                     >
                         <option value="">Select a trainee</option>
@@ -242,15 +573,12 @@ if (!$trainees || !$modules) {
                     >
                 </div>
 
-                <div>
-                    <label for="Module_Id" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Select Module
-                    </label>
+                <div class="form-group">
+                    <label for="Module_Id">Select Module</label>
 
                     <select
                         id="Module_Id"
                         name="Module_Id"
-                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                     >
                         <option value="">Select a module</option>
@@ -266,12 +594,12 @@ if (!$trainees || !$modules) {
                     </select>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="form-grid">
 
-                    <div>
-                        <label for="Formative_Assessment" class="block text-sm font-semibold text-slate-700 mb-2">
+                    <div class="form-group">
+                        <label for="Formative_Assessment">
                             Formative Assessment
-                            <span class="text-slate-400 font-normal">/ 50</span>
+                            <span class="label-hint">/ 50</span>
                         </label>
 
                         <input
@@ -282,15 +610,14 @@ if (!$trainees || !$modules) {
                             max="50"
                             step="0.01"
                             value="<?php echo escapeMarks($data['Formative_Assessment']); ?>"
-                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
                         >
                     </div>
 
-                    <div>
-                        <label for="Summative_Assessment" class="block text-sm font-semibold text-slate-700 mb-2">
+                    <div class="form-group">
+                        <label for="Summative_Assessment">
                             Summative Assessment
-                            <span class="text-slate-400 font-normal">/ 50</span>
+                            <span class="label-hint">/ 50</span>
                         </label>
 
                         <input
@@ -301,59 +628,52 @@ if (!$trainees || !$modules) {
                             max="50"
                             step="0.01"
                             value="<?php echo escapeMarks($data['Summative_Assessment']); ?>"
-                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
                         >
                     </div>
 
                 </div>
 
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-5">
+                <div class="summary-panel">
 
-                    <p class="text-sm font-semibold text-slate-700 mb-3">
-                        Assessment Summary
-                    </p>
+                    <h3>Assessment Summary</h3>
 
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="summary-content">
 
                         <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wide">
-                                Total Marks
-                            </p>
+                            <p class="summary-label">Total Marks</p>
 
-                            <p class="text-3xl font-bold text-slate-800 mt-1">
+                            <p class="total-value">
                                 <span id="totalMarks"><?php echo escapeMarks($data['Total_Marks']); ?></span>
-                                <span class="text-base font-medium text-slate-400">/ 100</span>
+                                <small>/ 100</small>
                             </p>
                         </div>
 
                         <div>
-                            <p class="text-xs text-slate-500 uppercase tracking-wide mb-2">
-                                Competency Decision
-                            </p>
+                            <p class="summary-label">Competency Decision</p>
 
                             <span
                                 id="decisionBadge"
-                                class="inline-flex px-3 py-1.5 rounded-full text-sm font-semibold"
+                                class="decision-badge <?php echo $data['Total_Marks'] >= 70 ? 'competent' : 'not-competent'; ?>"
                             >
                                 <?php echo escapeMarks($data['Total_Marks'] >= 70 ? 'Competent' : 'Not Competent'); ?>
                             </span>
                         </div>
 
                     </div>
+
                 </div>
 
-                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+                <div class="form-actions">
 
-                    <a href="listOfMarks.php"
-                       class="inline-flex justify-center items-center px-5 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-md hover:bg-slate-100 transition">
+                    <a href="listOfMarks.php" class="btn btn-cancel">
                         Cancel
                     </a>
 
                     <button
                         type="submit"
                         name="save"
-                        class="inline-flex justify-center items-center px-5 py-2.5 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 transition"
+                        class="btn btn-save"
                     >
                         Save Changes
                     </button>
@@ -361,7 +681,8 @@ if (!$trainees || !$modules) {
                 </div>
 
             </form>
-        </div>
+
+        </section>
 
     </main>
 
@@ -388,13 +709,15 @@ if (!$trainees || !$modules) {
             const total = formative + summative;
             const competent = total >= 70;
 
-            totalMarks.textContent = total.toFixed(2).replace(/\.00$/, '');
+            totalMarks.textContent = total.toFixed(2).replace(/\.?0+$/, '');
 
-            decisionBadge.textContent = competent ? 'Competent' : 'Not Competent';
+            decisionBadge.textContent = competent
+                ? 'Competent'
+                : 'Not Competent';
 
             decisionBadge.className = competent
-                ? 'inline-flex px-3 py-1.5 rounded-full text-sm font-semibold bg-green-50 text-green-700'
-                : 'inline-flex px-3 py-1.5 rounded-full text-sm font-semibold bg-red-50 text-red-700';
+                ? 'decision-badge competent'
+                : 'decision-badge not-competent';
         }
 
         formativeInput.addEventListener('input', updateAssessmentSummary);
