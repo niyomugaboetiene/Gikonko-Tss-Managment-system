@@ -16,138 +16,599 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
 $username = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
+$initial = strtoupper(substr($_SESSION['username'], 0, 1));
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student Dashboard | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .student-main {
+            flex: 1;
+            width: 100%;
+            padding: 115px 24px 45px;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .welcome-section {
+            margin-bottom: 30px;
+        }
+
+        .current-date {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .welcome-section h1 {
+            color: #0f172a;
+            font-size: 29px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-top: 9px;
+        }
+
+        .welcome-section p:last-child {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 9px;
+        }
+
+        .hero-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .hero-content {
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-label {
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .hero-content h2 {
+            color: #0f172a;
+            font-size: 37px;
+            line-height: 1.2;
+            font-weight: 700;
+            margin-top: 17px;
+            letter-spacing: -0.8px;
+        }
+
+        .hero-description {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-top: 18px;
+            max-width: 530px;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 12px 18px;
+            min-height: 43px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-primary {
+            color: #ffffff;
+            background: #1d4ed8;
+            border: 1px solid #1d4ed8;
+        }
+
+        .btn-primary:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        .btn-primary svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .btn-secondary {
+            color: #334155;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+
+        .hero-side {
+            background: #f1f5f9;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .account-card {
+            width: 100%;
+            max-width: 390px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        }
+
+        .account-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .account-label {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .account-name {
+            color: #0f172a;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        .account-avatar {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1d4ed8;
+            background: #eff6ff;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .account-details {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 22px 0;
+        }
+
+        .account-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .item-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .icon-green {
+            color: #15803d;
+            background: #f0fdf4;
+        }
+
+        .icon-blue {
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+
+        .account-item h4 {
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .account-item p {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .account-footer {
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .account-footer p {
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .quick-access {
+            margin-top: 35px;
+        }
+
+        .section-heading {
+            margin-bottom: 20px;
+        }
+
+        .section-heading h2 {
+            color: #0f172a;
+            font-size: 21px;
+            font-weight: 700;
+        }
+
+        .section-heading p {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .quick-card {
+            display: block;
+            padding: 25px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .quick-card:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+        }
+
+        .quick-card.logout-card:hover {
+            border-color: #fca5a5;
+        }
+
+        .quick-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 7px;
+        }
+
+        .quick-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .quick-icon.blue {
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+
+        .quick-icon.purple {
+            color: #7e22ce;
+            background: #faf5ff;
+        }
+
+        .quick-icon.red {
+            color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .quick-card h3 {
+            color: #0f172a;
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 17px;
+            transition: color 0.2s;
+        }
+
+        .quick-card:hover h3 {
+            color: #1d4ed8;
+        }
+
+        .quick-card.logout-card:hover h3 {
+            color: #b91c1c;
+        }
+
+        .quick-card p {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .quick-link {
+            display: inline-block;
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 17px;
+        }
+
+        .logout-card .quick-link {
+            color: #dc2626;
+        }
+
+        .message-card {
+            margin-top: 30px;
+            padding: 22px;
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+        }
+
+        .message-card h3 {
+            color: #1e3a8a;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .message-card p {
+            color: #1e40af;
+            font-size: 13px;
+            line-height: 1.7;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-content {
+                padding: 35px;
+            }
+
+            .hero-side {
+                padding: 30px;
+            }
+
+            .quick-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .student-main {
+                padding: 100px 15px 35px;
+            }
+
+            .welcome-section h1 {
+                font-size: 24px;
+            }
+
+            .hero-content {
+                padding: 25px 20px;
+            }
+
+            .hero-content h2 {
+                font-size: 29px;
+            }
+
+            .hero-side {
+                padding: 20px;
+            }
+
+            .account-card {
+                padding: 20px;
+            }
+
+            .quick-grid {
+                grid-template-columns: 1fr;
+                gap: 13px;
+            }
+
+            .quick-card {
+                padding: 21px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+            }
+
+            .hero-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body>
 
-<header class="w-full fixed top-0 left-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-    <?php include("DashboardStudent.php"); ?>
-</header>
+    <header>
+        <?php include("DashboardStudent.php"); ?>
+    </header>
 
-<main class="flex-grow pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+    <main class="student-main">
 
-    <div class="max-w-7xl mx-auto">
+        <div class="dashboard-container">
 
-        <div class="mb-8">
-            <p class="text-sm text-slate-500">
-                <?php echo date("l, F j, Y"); ?>
-            </p>
+            <div class="welcome-section">
 
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-2">
-                Welcome back, <?php echo $username; ?>!
-            </h1>
+                <p class="current-date">
+                    <?php echo date("l, F j, Y"); ?>
+                </p>
 
-            <p class="text-slate-500 mt-2">
-                Welcome to your GIKONKO TSS student portal.
-            </p>
-        </div>
+                <h1>
+                    Welcome back, <?php echo $username; ?>!
+                </h1>
 
-        <section class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                <p>
+                    Welcome to your GIKONKO TSS student portal.
+                </p>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2">
+            </div>
 
-                <div class="p-7 sm:p-10 lg:p-12 flex flex-col justify-center">
+            <section class="hero-card">
 
-                    <span class="text-sm font-semibold tracking-wider text-blue-700 uppercase">
-                        GIKONKO TSS Student Portal
-                    </span>
+                <div class="hero-grid">
 
-                    <h2 class="text-3xl sm:text-4xl font-bold text-slate-800 mt-4 leading-tight">
-                        Your education journey starts here.
-                    </h2>
+                    <div class="hero-content">
 
-                    <p class="text-slate-600 leading-relaxed mt-5">
-                        Access your academic information, follow your assessment
-                        progress, and stay connected with your training journey
-                        at GIKONKO Technical Secondary School.
-                    </p>
+                        <span class="hero-label">
+                            GIKONKO TSS Student Portal
+                        </span>
 
-                    <div class="flex flex-wrap gap-3 mt-8">
-                        <a href="studentMarks.php"
-                           class="inline-flex items-center px-5 py-3 bg-blue-700 text-white text-sm font-semibold rounded-md hover:bg-blue-800 transition">
-                            View My Marks
-                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </a>
+                        <h2>
+                            Your education journey starts here.
+                        </h2>
 
-                        <a href="studentProfile.php"
-                           class="inline-flex items-center px-5 py-3 border border-slate-300 text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-50 transition">
-                            My Profile
-                        </a>
+                        <p class="hero-description">
+                            Access your academic information, follow your assessment
+                            progress, and stay connected with your training journey
+                            at GIKONKO Technical Secondary School.
+                        </p>
+
+                        <div class="hero-actions">
+
+                            <a href="studentMarks.php" class="btn btn-primary">
+                                View My Marks
+
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+
+                            <a href="studentProfile.php" class="btn btn-secondary">
+                                My Profile
+                            </a>
+
+                        </div>
+
                     </div>
 
-                </div>
+                    <div class="hero-side">
 
-                <div class="bg-slate-100 p-8 sm:p-10 flex items-center justify-center">
+                        <div class="account-card">
 
-                    <div class="w-full max-w-sm">
-
-                        <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-
-                            <div class="flex items-center justify-between border-b border-slate-100 pb-5">
+                            <div class="account-header">
 
                                 <div>
-                                    <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    <p class="account-label">
                                         Student account
                                     </p>
 
-                                    <h3 class="text-xl font-bold text-slate-800 mt-2">
+                                    <h3 class="account-name">
                                         <?php echo $username; ?>
                                     </h3>
                                 </div>
 
-                                <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-xl font-bold">
-                                    <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                                <div class="account-avatar">
+                                    <?php echo htmlspecialchars($initial, ENT_QUOTES, 'UTF-8'); ?>
                                 </div>
 
                             </div>
 
-                            <div class="py-5 space-y-4">
+                            <div class="account-details">
 
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-md bg-green-50 text-green-700 flex items-center justify-center">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="account-item">
+
+                                    <div class="item-icon icon-green">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                  stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
                                     </div>
 
                                     <div>
-                                        <p class="text-sm font-semibold text-slate-800">Account Active</p>
-                                        <p class="text-xs text-slate-500">Welcome to your student portal</p>
+                                        <h4>Account Active</h4>
+                                        <p>Welcome to your student portal</p>
                                     </div>
+
                                 </div>
 
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-md bg-blue-50 text-blue-700 flex items-center justify-center">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="account-item">
+
+                                    <div class="item-icon icon-blue">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                  stroke-width="2" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
+                                                stroke-width="2"
+                                                d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
                                         </svg>
                                     </div>
 
                                     <div>
-                                        <p class="text-sm font-semibold text-slate-800">Academic Progress</p>
-                                        <p class="text-xs text-slate-500">Keep working towards your goals</p>
+                                        <h4>Academic Progress</h4>
+                                        <p>Keep working towards your goals</p>
                                     </div>
+
                                 </div>
 
                             </div>
 
-                            <div class="pt-4 border-t border-slate-100">
-                                <p class="text-xs text-slate-500">
+                            <div class="account-footer">
+                                <p>
                                     GIKONKO TSS · Student Management System
                                 </p>
                             </div>
@@ -158,112 +619,110 @@ $username = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
 
                 </div>
 
-            </div>
+            </section>
 
-        </section>
+            <section class="quick-access">
 
-        <section class="mt-8">
+                <div class="section-heading">
+                    <h2>Quick Access</h2>
 
-            <div class="mb-5">
-                <h2 class="text-xl font-bold text-slate-800">Quick Access</h2>
-                <p class="text-sm text-slate-500 mt-1">
-                    Navigate to your student services.
+                    <p>
+                        Navigate to your student services.
+                    </p>
+                </div>
+
+                <div class="quick-grid">
+
+                    <a href="studentMarks.php" class="quick-card">
+
+                        <div class="quick-icon blue">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+
+                        <h3>My Academic Marks</h3>
+
+                        <p>
+                            View your assessment results and academic performance.
+                        </p>
+
+                        <span class="quick-link">
+                            View results &rarr;
+                        </span>
+
+                    </a>
+
+                    <a href="studentProfile.php" class="quick-card">
+
+                        <div class="quick-icon purple">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+
+                        <h3>My Profile</h3>
+
+                        <p>
+                            Access your personal student account information.
+                        </p>
+
+                        <span class="quick-link">
+                            View profile &rarr;
+                        </span>
+
+                    </a>
+
+                    <a
+                        href="logoutStudent.php"
+                        onclick="return confirm('Are you sure you want to logout?')"
+                        class="quick-card logout-card">
+
+                        <div class="quick-icon red">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                        </div>
+
+                        <h3>Logout</h3>
+
+                        <p>
+                            Securely sign out of your student account.
+                        </p>
+
+                        <span class="quick-link">
+                            Sign out &rarr;
+                        </span>
+
+                    </a>
+
+                </div>
+
+            </section>
+
+            <div class="message-card">
+
+                <h3>A message for every trainee</h3>
+
+                <p>
+                    Success comes through consistency, discipline, and hard work.
+                    Stay focused on your studies and continue building the skills
+                    that will shape your future.
                 </p>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-
-                <a href="studentMarks.php"
-                   class="bg-white border border-slate-200 rounded-lg p-6 hover:border-blue-300 hover:shadow-sm transition group">
-
-                    <div class="w-11 h-11 bg-blue-50 text-blue-700 rounded-md flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-
-                    <h3 class="text-base font-semibold text-slate-800 mt-4 group-hover:text-blue-700">
-                        My Academic Marks
-                    </h3>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        View your assessment results and academic performance.
-                    </p>
-
-                    <span class="text-sm text-blue-700 font-medium inline-block mt-4">
-                        View results &rarr;
-                    </span>
-
-                </a>
-
-                <a href="studentProfile.php"
-                   class="bg-white border border-slate-200 rounded-lg p-6 hover:border-blue-300 hover:shadow-sm transition group">
-
-                    <div class="w-11 h-11 bg-purple-50 text-purple-700 rounded-md flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                    </div>
-
-                    <h3 class="text-base font-semibold text-slate-800 mt-4 group-hover:text-blue-700">
-                        My Profile
-                    </h3>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        Access your personal student account information.
-                    </p>
-
-                    <span class="text-sm text-blue-700 font-medium inline-block mt-4">
-                        View profile &rarr;
-                    </span>
-
-                </a>
-
-                <a href="logoutStudent.php"
-                   onclick="return confirm('Are you sure you want to logout?')"
-                   class="bg-white border border-slate-200 rounded-lg p-6 hover:border-red-300 hover:shadow-sm transition group">
-
-                    <div class="w-11 h-11 bg-red-50 text-red-700 rounded-md flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                    </div>
-
-                    <h3 class="text-base font-semibold text-slate-800 mt-4 group-hover:text-red-700">
-                        Logout
-                    </h3>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        Securely sign out of your student account.
-                    </p>
-
-                    <span class="text-sm text-red-600 font-medium inline-block mt-4">
-                        Sign out &rarr;
-                    </span>
-
-                </a>
 
             </div>
 
-        </section>
-
-        <div class="mt-8 bg-blue-50 border border-blue-100 rounded-lg p-5">
-            <h3 class="font-semibold text-blue-900">A message for every trainee</h3>
-            <p class="text-sm text-blue-800 mt-2 leading-relaxed">
-                Success comes through consistency, discipline, and hard work.
-                Stay focused on your studies and continue building the skills
-                that will shape your future.
-            </p>
         </div>
 
-    </div>
+    </main>
 
-</main>
-
-<?php include("footer.php"); ?>
+    <?php include("footer.php"); ?>
 
 </body>
 </html>

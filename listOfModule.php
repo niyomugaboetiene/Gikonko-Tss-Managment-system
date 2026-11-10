@@ -37,6 +37,14 @@ while ($row = mysqli_fetch_assoc($result)) {
 function e($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
+
+$tradeQuery = mysqli_query($conn, "SELECT COUNT(*) AS total FROM trades");
+$totalTrades = "—";
+
+if ($tradeQuery) {
+    $tradeData = mysqli_fetch_assoc($tradeQuery);
+    $totalTrades = (int)$tradeData['total'];
+}
 ?>
 
 <!DOCTYPE html>
@@ -45,50 +53,506 @@ function e($value) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Module Management | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 50;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+            padding: 125px 24px 55px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .eyebrow {
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .page-title {
+            margin-top: 9px;
+            color: #1e293b;
+            font-size: 30px;
+            font-weight: 750;
+        }
+
+        .page-description {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .heading-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 650;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .btn-back {
+            color: #475569;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-back:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-primary {
+            color: #ffffff;
+            background: #1d4ed8;
+            border: 1px solid #1d4ed8;
+        }
+
+        .btn-primary:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            padding: 22px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+        }
+
+        .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .stat-number {
+            margin-top: 10px;
+            color: #1e293b;
+            font-size: 30px;
+            font-weight: 750;
+            line-height: 1;
+        }
+
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        .stat-icon svg {
+            width: 23px;
+            height: 23px;
+        }
+
+        .icon-blue {
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+
+        .icon-purple {
+            color: #7e22ce;
+            background: #faf5ff;
+        }
+
+        .stat-note {
+            margin-top: 14px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .records-section {
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            color: #1e293b;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .section-description {
+            margin-top: 6px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 330px;
+            max-width: 100%;
+        }
+
+        .search-box svg {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            width: 19px;
+            height: 19px;
+            color: #94a3b8;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 11px 14px 11px 40px;
+            color: #334155;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+            font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .module-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .module-table thead {
+            background: #f8fafc;
+            color: #64748b;
+        }
+
+        .module-table th {
+            padding: 15px 22px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .module-table td {
+            padding: 17px 22px;
+            color: #475569;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .module-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .module-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .module-code {
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .module-name {
+            color: #1e293b;
+            font-weight: 650;
+        }
+
+        .trade-name {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            color: #1d4ed8;
+            background: #eff6ff;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 11px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            transition: background 0.2s;
+        }
+
+        .update-btn {
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+
+        .update-btn:hover {
+            background: #dbeafe;
+        }
+
+        .delete-btn {
+            color: #b91c1c;
+            background: #fef2f2;
+        }
+
+        .delete-btn:hover {
+            background: #fee2e2;
+        }
+
+        .empty-state {
+            padding: 55px 20px !important;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            color: #94a3b8;
+            background: #f1f5f9;
+            border-radius: 50%;
+        }
+
+        .empty-icon svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        .empty-title {
+            margin-top: 15px;
+            color: #1e293b;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .empty-description {
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .empty-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .empty-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-search-results td {
+            padding: 28px 20px;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 15px 22px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .table-footer p {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 115px 16px 40px;
+            }
+
+            .page-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .page-title {
+                font-size: 25px;
+            }
+
+            .section-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .heading-actions {
+                width: 100%;
+            }
+
+            .heading-actions .btn {
+                flex: 1;
+            }
+
+            .table-footer {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body>
 
-<header class="w-full fixed top-0 left-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+<header class="site-header">
     <?php include("Dashboard.php"); ?>
 </header>
 
-<main class="flex-grow pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+<main>
+    <div class="container">
 
-    <div class="max-w-7xl mx-auto">
-
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-
+        <div class="page-heading">
             <div>
-                <p class="text-sm font-medium text-blue-700 uppercase tracking-wider">
-                    Academic Administration
-                </p>
+                <p class="eyebrow">Academic Administration</p>
 
-                <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-2">
-                    Module Management
-                </h1>
+                <h1 class="page-title">Module Management</h1>
 
-                <p class="text-sm text-slate-500 mt-2">
+                <p class="page-description">
                     Manage training modules and their associated trades.
                 </p>
             </div>
 
-            <div class="flex flex-wrap gap-3">
+            <div class="heading-actions">
 
-                <a href="greetingUser.php"
-                   class="inline-flex items-center justify-center px-4 py-2.5 border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-50 transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="greetingUser.php" class="btn btn-back">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                     Back
                 </a>
 
-                <a href="addModule.php"
-                   class="inline-flex items-center justify-center px-4 py-2.5 bg-blue-700 text-white text-sm font-semibold rounded-md hover:bg-blue-800 transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="addModule.php" class="btn btn-primary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -96,168 +560,143 @@ function e($value) {
                 </a>
 
             </div>
-
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+        <div class="stats-grid">
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <div class="flex items-center justify-between">
-
+            <div class="stat-card">
+                <div class="stat-top">
                     <div>
-                        <p class="text-sm font-medium text-slate-500">
-                            Total Modules
-                        </p>
+                        <p class="stat-label">Total Modules</p>
 
-                        <h2 class="text-3xl font-bold text-slate-800 mt-2">
+                        <h2 class="stat-number">
                             <?php echo $totalModules; ?>
                         </h2>
                     </div>
 
-                    <div class="w-11 h-11 rounded-md bg-blue-50 text-blue-700 flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="stat-icon icon-blue">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
-                                  stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"/>
+                                  stroke-width="2"
+                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"/>
                         </svg>
                     </div>
-
                 </div>
 
-                <p class="text-xs text-slate-400 mt-3">
+                <p class="stat-note">
                     All registered training modules
                 </p>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <div class="flex items-center justify-between">
-
+            <div class="stat-card">
+                <div class="stat-top">
                     <div>
-                        <p class="text-sm font-medium text-slate-500">
-                            Registered Trades
-                        </p>
+                        <p class="stat-label">Registered Trades</p>
 
-                        <h2 class="text-3xl font-bold text-slate-800 mt-2">
-                            <?php
-                            $tradeQuery = mysqli_query($conn, "SELECT COUNT(*) AS total FROM trades");
-
-                            if ($tradeQuery) {
-                                $tradeData = mysqli_fetch_assoc($tradeQuery);
-                                echo (int)$tradeData['total'];
-                            } else {
-                                echo "—";
-                            }
-                            ?>
+                        <h2 class="stat-number">
+                            <?php echo $totalTrades; ?>
                         </h2>
                     </div>
 
-                    <div class="w-11 h-11 rounded-md bg-purple-50 text-purple-700 flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="stat-icon icon-purple">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   stroke-width="2" d="M12 6v12m-8-6h16"/>
                         </svg>
                     </div>
-
                 </div>
 
-                <p class="text-xs text-slate-400 mt-3">
+                <p class="stat-note">
                     Trades available in the system
                 </p>
             </div>
 
         </div>
 
-        <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <section class="records-section">
 
-            <div class="p-5 sm:p-6 border-b border-slate-200">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Registered Modules</h2>
 
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-800">
-                            Registered Modules
-                        </h2>
-
-                        <p class="text-sm text-slate-500 mt-1">
-                            View and manage all training modules.
-                        </p>
-                    </div>
-
-                    <div class="relative w-full md:w-80">
-
-                        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="7" stroke-width="2"/>
-                            <path stroke-linecap="round" stroke-width="2" d="m16 16 4 4"/>
-                        </svg>
-
-                        <input
-                            type="text"
-                            id="moduleSearch"
-                            placeholder="Search module or trade..."
-                            class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-
-                    </div>
-
+                    <p class="section-description">
+                        View and manage all training modules.
+                    </p>
                 </div>
 
+                <div class="search-box">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" stroke-width="2"/>
+                        <path stroke-linecap="round" stroke-width="2" d="m16 16 4 4"/>
+                    </svg>
+
+                    <input
+                        type="text"
+                        id="moduleSearch"
+                        class="search-input"
+                        placeholder="Search module or trade..."
+                    >
+                </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="table-wrapper">
+                <table class="module-table" id="moduleTable">
 
-                <table class="w-full text-sm text-left whitespace-nowrap" id="moduleTable">
-
-                    <thead class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider">
+                    <thead>
                         <tr>
-                            <th class="px-6 py-4 font-semibold">Module Code</th>
-                            <th class="px-6 py-4 font-semibold">Module Name</th>
-                            <th class="px-6 py-4 font-semibold">Trade Code</th>
-                            <th class="px-6 py-4 font-semibold">Trade Name</th>
-                            <th class="px-6 py-4 font-semibold text-center">Actions</th>
+                            <th>Module Code</th>
+                            <th>Module Name</th>
+                            <th>Trade Code</th>
+                            <th>Trade Name</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
 
                     <?php if ($totalModules > 0): ?>
 
                         <?php foreach ($modules as $data): ?>
 
-                            <tr class="module-row hover:bg-slate-50 transition">
+                            <tr class="module-row">
 
-                                <td class="px-6 py-4">
-                                    <span class="font-semibold text-slate-700">
+                                <td>
+                                    <span class="module-code">
                                         #<?php echo e($data['Module_Id']); ?>
                                     </span>
                                 </td>
 
-                                <td class="px-6 py-4">
-                                    <div class="font-semibold text-slate-800">
+                                <td>
+                                    <span class="module-name">
                                         <?php echo e($data['Module_Name']); ?>
-                                    </div>
+                                    </span>
                                 </td>
 
-                                <td class="px-6 py-4 text-slate-600">
+                                <td>
                                     <?php echo e($data['Trade_Id']); ?>
                                 </td>
 
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold">
+                                <td>
+                                    <span class="trade-name">
                                         <?php echo e($data['Trade_name']); ?>
                                     </span>
                                 </td>
 
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center justify-center gap-2">
+                                <td>
+                                    <div class="action-buttons">
 
-                                        <a href="updateModule.php?Module_Id=<?php echo urlencode($data['Module_Id']); ?>"
-                                           class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition">
+                                        <a
+                                            href="updateModule.php?Module_Id=<?php echo urlencode($data['Module_Id']); ?>"
+                                            class="action-btn update-btn"
+                                        >
                                             Update
                                         </a>
 
-                                        <a href="deleteModule.php?Module_Id=<?php echo urlencode($data['Module_Id']); ?>"
-                                           onclick="return confirm('Are you sure you want to delete this module? Its related marks may also be deleted.')"
-                                           class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition">
+                                        <a
+                                            href="deleteModule.php?Module_Id=<?php echo urlencode($data['Module_Id']); ?>"
+                                            onclick="return confirm('Are you sure you want to delete this module? Its related marks may also be deleted.')"
+                                            class="action-btn delete-btn"
+                                        >
                                             Delete
                                         </a>
 
@@ -271,66 +710,54 @@ function e($value) {
                     <?php else: ?>
 
                         <tr>
-                            <td colspan="5" class="px-6 py-14 text-center">
+                            <td colspan="5" class="empty-state">
 
-                                <div class="flex flex-col items-center">
-
-                                    <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                  stroke-width="2" d="M12 6v12m-8-6h16"/>
-                                        </svg>
-                                    </div>
-
-                                    <h3 class="text-base font-semibold text-slate-800 mt-4">
-                                        No modules found
-                                    </h3>
-
-                                    <p class="text-sm text-slate-500 mt-1">
-                                        There are currently no registered modules.
-                                    </p>
-
-                                    <a href="addModule.php"
-                                       class="mt-4 text-sm font-semibold text-blue-700 hover:underline">
-                                        Add your first module
-                                    </a>
-
+                                <div class="empty-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              stroke-width="2" d="M12 6v12m-8-6h16"/>
+                                    </svg>
                                 </div>
+
+                                <h3 class="empty-title">
+                                    No modules found
+                                </h3>
+
+                                <p class="empty-description">
+                                    There are currently no registered modules.
+                                </p>
+
+                                <a href="addModule.php" class="empty-link">
+                                    Add your first module
+                                </a>
 
                             </td>
                         </tr>
 
                     <?php endif; ?>
 
-                    <tr id="noSearchResults" class="hidden">
-                        <td colspan="5" class="px-6 py-8 text-center text-slate-500">
+                    <tr id="noSearchResults" class="no-search-results hidden">
+                        <td colspan="5">
                             No matching modules found.
                         </td>
                     </tr>
 
                     </tbody>
-
                 </table>
-
             </div>
 
-            <div class="px-5 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-
-                <p class="text-xs text-slate-500">
+            <div class="table-footer">
+                <p>
                     Showing <span id="visibleCount"><?php echo $totalModules; ?></span>
                     of <?php echo $totalModules; ?> modules
                 </p>
 
-                <p class="text-xs text-slate-500">
-                    GIKONKO TSS · Module Management
-                </p>
-
+                <p>GIKONKO TSS · Module Management</p>
             </div>
 
         </section>
 
     </div>
-
 </main>
 
 <?php include("footer.php"); ?>
@@ -356,7 +783,11 @@ searchInput.addEventListener("input", function () {
     });
 
     visibleCount.textContent = count;
-    noSearchResults.classList.toggle("hidden", count !== 0 || rows.length === 0);
+
+    noSearchResults.classList.toggle(
+        "hidden",
+        count !== 0 || rows.length === 0
+    );
 });
 </script>
 
