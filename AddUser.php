@@ -5,7 +5,7 @@ include("conn.php");
 
 if (!isset($_SESSION['username'])) {
     $_SESSION['login_error'] = "Please login to access this page";
-    header("Location: login.php");
+    header("Location: index.php");
     exit();
 }
 

@@ -685,7 +685,7 @@ function e($value) {
                         <a href="loginStudent.php">Student Login</a>
                     </p>
 
-                    <a href="login.php" class="admin-link">
+                    <a href="index.php" class="admin-link">
                         Return to Admin Login
                     </a>
                 </div>

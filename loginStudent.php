@@ -498,7 +498,7 @@ function e($value) {
                     <a href="register.php">Register here</a>
                 </p>
 
-                <a href="login.php" class="back-link">
+                <a href="index.php" class="back-link">
                     &larr; Back to Admin Login
                 </a>
 

@@ -6,7 +6,7 @@ session_start();
 
 if (!isset($_SESSION['Firstname']) || !isset($_SESSION['Trainee_Id'])) {
     $_SESSION['login_error'] = "Please login to access this page";
-    header("Location:login.php");
+    header("Location:index.php");
     exit();
 }
 
