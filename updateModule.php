@@ -1,6 +1,7 @@
 
 <?php
 include("conn.php");
+
 session_start();
 
 if (!isset($_SESSION['username'])) {
@@ -18,17 +19,26 @@ if (!isset($_GET['Module_Id']) || !ctype_digit((string)$_GET['Module_Id'])) {
 
 $Module_Id = (int)$_GET['Module_Id'];
 
-$stmt = mysqli_prepare($conn, "SELECT
-    m.Module_Id,
-    m.Module_Name,
-    m.Trade_Id,
-    t.Trade_name
+$stmt = mysqli_prepare(
+    $conn,
+    "SELECT
+        m.Module_Id,
+        m.Module_Name,
+        m.Trade_Id,
+        t.Trade_name
     FROM modules m
     JOIN trades t ON t.Trade_id = m.Trade_Id
-    WHERE m.Module_Id = ?");
+    WHERE m.Module_Id = ?"
+);
+
+if (!$stmt) {
+    error_log("Module query preparation failed: " . mysqli_error($conn));
+    die("Unable to load module information.");
+}
 
 mysqli_stmt_bind_param($stmt, "i", $Module_Id);
 mysqli_stmt_execute($stmt);
+
 $result = mysqli_stmt_get_result($stmt);
 
 if (mysqli_num_rows($result) === 0) {
@@ -46,14 +56,22 @@ if (isset($_POST['save'])) {
 
     if ($Module_Name === '' || $Trade_Id === '') {
         $error = "Please fill in all required fields.";
-    } elseif (!ctype_digit($Trade_Id)) {
+    } elseif (!ctype_digit($Trade_Id) || (int)$Trade_Id < 1) {
         $error = "Please select a valid trade.";
     } else {
-        $checkTrade = mysqli_prepare($conn, "SELECT Trade_id FROM trades WHERE Trade_id = ?");
+        $Trade_Id = (int)$Trade_Id;
+
+        $checkTrade = mysqli_prepare(
+            $conn,
+            "SELECT Trade_id FROM trades WHERE Trade_id = ?"
+        );
+
         mysqli_stmt_bind_param($checkTrade, "i", $Trade_Id);
         mysqli_stmt_execute($checkTrade);
+
         $tradeResult = mysqli_stmt_get_result($checkTrade);
         $tradeExists = mysqli_num_rows($tradeResult) > 0;
+
         mysqli_stmt_close($checkTrade);
 
         if (!$tradeExists) {
@@ -65,10 +83,18 @@ if (isset($_POST['save'])) {
                  WHERE Module_Name = ? AND Module_Id != ?"
             );
 
-            mysqli_stmt_bind_param($checkDuplicate, "si", $Module_Name, $Module_Id);
+            mysqli_stmt_bind_param(
+                $checkDuplicate,
+                "si",
+                $Module_Name,
+                $Module_Id
+            );
+
             mysqli_stmt_execute($checkDuplicate);
+
             $duplicateResult = mysqli_stmt_get_result($checkDuplicate);
             $duplicateExists = mysqli_num_rows($duplicateResult) > 0;
+
             mysqli_stmt_close($checkDuplicate);
 
             if ($duplicateExists) {
@@ -76,7 +102,8 @@ if (isset($_POST['save'])) {
             } else {
                 $update = mysqli_prepare(
                     $conn,
-                    "UPDATE modules SET Module_Name = ?, Trade_Id = ?
+                    "UPDATE modules
+                     SET Module_Name = ?, Trade_Id = ?
                      WHERE Module_Id = ?"
                 );
 
@@ -93,6 +120,7 @@ if (isset($_POST['save'])) {
                     header("Location: listOfModule.php");
                     exit();
                 } else {
+                    error_log("Module update failed: " . mysqli_stmt_error($update));
                     $error = "Unable to update the module. Please try again.";
                 }
 
@@ -111,10 +139,13 @@ function escapeModule($value) {
 
 $trades = mysqli_query(
     $conn,
-    "SELECT Trade_id, Trade_name FROM trades ORDER BY Trade_name ASC"
+    "SELECT Trade_id, Trade_name
+     FROM trades
+     ORDER BY Trade_name ASC"
 );
 
 if (!$trades) {
+    error_log("Trade loading failed: " . mysqli_error($conn));
     die("Unable to load trade information.");
 }
 ?>
@@ -124,71 +155,315 @@ if (!$trades) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Update Module | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
+
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .main-content {
+            flex: 1;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 38px 24px 50px;
+        }
+
+        .page-heading {
+            margin-bottom: 28px;
+        }
+
+        .page-eyebrow {
+            display: inline-block;
+            margin-bottom: 10px;
+            color: #2563eb;
+            font-size: 11px;
+            font-weight: 750;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .page-heading h1 {
+            color: #1e293b;
+            font-size: 28px;
+            font-weight: 750;
+            letter-spacing: -0.7px;
+        }
+
+        .page-heading p {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .module-card {
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 5px 18px rgba(15, 23, 42, 0.035);
+        }
+
+        .card-header {
+            padding: 22px 26px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .card-header h2 {
+            color: #1e293b;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .card-header p {
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .record-id {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 11px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .form-content {
+            padding: 28px 26px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 9px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        input,
+        select {
+            width: 100%;
+            height: 47px;
+            padding: 0 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            outline: none;
+            background: #ffffff;
+            color: #334155;
+            font-family: inherit;
+            font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        input[readonly] {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .error-message {
+            padding: 14px 16px;
+            margin-bottom: 24px;
+            border: 1px solid #fecaca;
+            border-radius: 7px;
+            background: #fef2f2;
+            color: #b91c1c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .note-box {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-top: 4px;
+            margin-bottom: 27px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .note-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+        }
+
+        .note-box p {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .note-box strong {
+            color: #334155;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            padding-top: 5px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 43px;
+            padding: 0 21px;
+            border-radius: 7px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-cancel {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .btn-save {
+            border: 1px solid #1d4ed8;
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .btn-save:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        @media (max-width: 650px) {
+            .main-content {
+                padding: 28px 15px 38px;
+            }
+
+            .page-heading h1 {
+                font-size: 23px;
+            }
+
+            .card-header,
+            .form-content {
+                padding: 21px 18px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .form-actions {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body>
 
-    <header class="w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="flex-grow w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="main-content">
 
-        <div class="mb-8">
-            <p class="text-sm font-semibold text-blue-700 uppercase tracking-wide">
-                Academic Management
-            </p>
+        <div class="page-heading">
+            <span class="page-eyebrow">Academic Management</span>
 
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">
-                Update Module
-            </h1>
+            <h1>Update Module</h1>
 
-            <p class="text-sm text-slate-500 mt-2">
+            <p>
                 Modify module information and its assigned trade.
             </p>
         </div>
 
-        <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <section class="module-card">
 
-            <div class="px-6 py-5 border-b border-slate-200">
-                <h2 class="text-lg font-semibold text-slate-800">
-                    Module Information
-                </h2>
+            <div class="card-header">
+                <h2>Module Information</h2>
 
-                <p class="text-sm text-slate-500 mt-1">
-                    Module record #<?php echo escapeModule($Module['Module_Id']); ?>
+                <p>
+                    Edit the module details and review its assigned trade.
                 </p>
+
+                <span class="record-id">
+                    Record #<?php echo escapeModule($Module['Module_Id']); ?>
+                </span>
             </div>
 
-            <form method="POST" class="p-6 space-y-6">
+            <form method="POST" class="form-content">
 
                 <?php if ($error !== ''): ?>
-                    <div class="p-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+                    <div class="error-message">
                         <?php echo escapeModule($error); ?>
                     </div>
                 <?php endif; ?>
 
-                <div>
-                    <label for="Module_Id" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Module Code
-                    </label>
+                <div class="form-group">
+                    <label for="Module_Id">Module Code</label>
 
                     <input
                         type="text"
                         id="Module_Id"
                         value="<?php echo escapeModule($Module['Module_Id']); ?>"
                         readonly
-                        class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-md text-slate-500 cursor-not-allowed"
                     >
                 </div>
 
-                <div>
-                    <label for="Module_Name" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Module Name
-                    </label>
+                <div class="form-group">
+                    <label for="Module_Name">Module Name</label>
 
                     <input
                         type="text"
@@ -198,20 +473,16 @@ if (!$trades) {
                         placeholder="Enter module name"
                         maxlength="255"
                         required
-                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                 </div>
 
-                <div>
-                    <label for="Trade_Id" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Assigned Trade
-                    </label>
+                <div class="form-group">
+                    <label for="Trade_Id">Assigned Trade</label>
 
                     <select
                         id="Trade_Id"
                         name="Trade_Id"
                         required
-                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="">Select a trade</option>
 
@@ -226,24 +497,37 @@ if (!$trades) {
                     </select>
                 </div>
 
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
-                    <p class="text-sm text-slate-600">
-                        <span class="font-semibold text-slate-800">Note:</span>
+                <div class="note-box">
+                    <svg
+                        class="note-icon"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.8"
+                            d="M12 8v4m0 4h.01M10.3 3.86L1.82 18a2 2 0 001.7 3h16.96a2 2 0 001.7-3L13.7 3.86a2 2 0 00-3.4 0z"
+                        />
+                    </svg>
+
+                    <p>
+                        <strong>Note:</strong>
                         Changing the assigned trade will update the trade associated with this module.
                     </p>
                 </div>
 
-                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+                <div class="form-actions">
 
-                    <a href="listOfModule.php"
-                       class="inline-flex justify-center items-center px-5 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-md hover:bg-slate-100 transition">
+                    <a href="listOfModule.php" class="btn btn-cancel">
                         Cancel
                     </a>
 
                     <button
                         type="submit"
                         name="save"
-                        class="inline-flex justify-center items-center px-5 py-2.5 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 transition"
+                        class="btn btn-save"
                     >
                         Save Changes
                     </button>
@@ -251,6 +535,7 @@ if (!$trades) {
                 </div>
 
             </form>
+
         </section>
 
     </main>

@@ -18,16 +18,19 @@ if (!isset($_GET['Trainee_Id']) || !ctype_digit((string)$_GET['Trainee_Id'])) {
 
 $Trainee_Id = (int)$_GET['Trainee_Id'];
 
-$stmt = mysqli_prepare($conn, "SELECT
-    t.Trainee_Id,
-    t.Firstname,
-    t.lastname,
-    t.Gender,
-    t.Trade_Id,
-    td.Trade_name
+$stmt = mysqli_prepare(
+    $conn,
+    "SELECT
+        t.Trainee_Id,
+        t.Firstname,
+        t.lastname,
+        t.Gender,
+        t.Trade_Id,
+        td.Trade_name
     FROM trainees t
     JOIN trades td ON t.Trade_Id = td.Trade_id
-    WHERE t.Trainee_Id = ?");
+    WHERE t.Trainee_Id = ?"
+);
 
 mysqli_stmt_bind_param($stmt, "i", $Trainee_Id);
 mysqli_stmt_execute($stmt);
@@ -67,8 +70,10 @@ if (isset($_POST['update'])) {
 
         mysqli_stmt_bind_param($checkTrade, "i", $Trade_Id);
         mysqli_stmt_execute($checkTrade);
+
         $tradeResult = mysqli_stmt_get_result($checkTrade);
         $tradeExists = mysqli_num_rows($tradeResult) > 0;
+
         mysqli_stmt_close($checkTrade);
 
         if (!$tradeExists) {
@@ -81,7 +86,7 @@ if (isset($_POST['update'])) {
                     lastname = ?,
                     Gender = ?,
                     Trade_Id = ?
-                 WHERE Trainee_Id = ?"
+                WHERE Trainee_Id = ?"
             );
 
             mysqli_stmt_bind_param(
@@ -132,72 +137,309 @@ if (!$trades) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Trainee | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 42px 24px 55px;
+        }
+
+        .page-heading {
+            margin-bottom: 30px;
+        }
+
+        .eyebrow {
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 9px;
+        }
+
+        .page-heading h1 {
+            color: #0f172a;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.7px;
+        }
+
+        .page-description {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 9px;
+            line-height: 1.6;
+        }
+
+        .form-card {
+            max-width: 800px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.035);
+        }
+
+        .card-header {
+            padding: 23px 28px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .card-header h2 {
+            color: #1e293b;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .record-id {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 7px;
+        }
+
+        .form-body {
+            padding: 28px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 23px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 9px;
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            height: 48px;
+            padding: 0 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: #ffffff;
+            color: #1e293b;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .form-control[readonly] {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        .error-message {
+            padding: 14px 16px;
+            margin-bottom: 23px;
+            color: #b91c1c;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 7px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .info-note {
+            padding: 16px;
+            margin-top: 5px;
+            margin-bottom: 25px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .info-note p {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .info-note strong {
+            color: #334155;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 5px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 21px;
+            border-radius: 7px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-cancel {
+            color: #475569;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-save {
+            color: #ffffff;
+            background: #1d4ed8;
+            border: 1px solid #1d4ed8;
+        }
+
+        .btn-save:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        @media (max-width: 640px) {
+            main {
+                padding: 30px 16px 40px;
+            }
+
+            .page-heading h1 {
+                font-size: 25px;
+            }
+
+            .card-header {
+                padding: 20px;
+            }
+
+            .form-body {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body>
 
-    <header class="w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="flex-grow w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main>
 
-        <div class="mb-8">
-            <p class="text-sm font-semibold text-blue-700 uppercase tracking-wide">
-                Student Management
-            </p>
+        <div class="page-heading">
+            <p class="eyebrow">Student Management</p>
 
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">
-                Update Trainee
-            </h1>
+            <h1>Update Trainee</h1>
 
-            <p class="text-sm text-slate-500 mt-2">
+            <p class="page-description">
                 Edit trainee personal information and assigned trade.
             </p>
         </div>
 
-        <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <section class="form-card">
 
-            <div class="px-6 py-5 border-b border-slate-200">
-                <h2 class="text-lg font-semibold text-slate-800">
-                    Trainee Information
-                </h2>
+            <div class="card-header">
+                <h2>Trainee Information</h2>
 
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="record-id">
                     Trainee record #<?php echo escapeTrainee($trainee['Trainee_Id']); ?>
                 </p>
             </div>
 
-            <form method="POST" class="p-6 space-y-6">
+            <form method="POST" class="form-body">
 
                 <?php if ($error !== ''): ?>
-                    <div class="p-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+                    <div class="error-message">
                         <?php echo escapeTrainee($error); ?>
                     </div>
                 <?php endif; ?>
 
-                <div>
-                    <label for="Trainee_Id" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Trainee Code
-                    </label>
+                <div class="form-group">
+                    <label for="Trainee_Id">Trainee Code</label>
 
                     <input
                         type="text"
                         id="Trainee_Id"
                         value="<?php echo escapeTrainee($trainee['Trainee_Id']); ?>"
                         readonly
-                        class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-md text-slate-500 cursor-not-allowed"
+                        class="form-control"
                     >
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="form-grid">
 
-                    <div>
-                        <label for="Firstname" class="block text-sm font-semibold text-slate-700 mb-2">
-                            First Name
-                        </label>
+                    <div class="form-group">
+                        <label for="Firstname">First Name</label>
 
                         <input
                             type="text"
@@ -207,14 +449,12 @@ if (!$trades) {
                             placeholder="Enter first name"
                             maxlength="100"
                             required
-                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            class="form-control"
                         >
                     </div>
 
-                    <div>
-                        <label for="lastname" class="block text-sm font-semibold text-slate-700 mb-2">
-                            Last Name
-                        </label>
+                    <div class="form-group">
+                        <label for="lastname">Last Name</label>
 
                         <input
                             type="text"
@@ -224,43 +464,47 @@ if (!$trades) {
                             placeholder="Enter last name"
                             maxlength="100"
                             required
-                            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            class="form-control"
                         >
                     </div>
 
                 </div>
 
-                <div>
-                    <label for="Gender" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Gender
-                    </label>
+                <div class="form-group">
+                    <label for="Gender">Gender</label>
 
                     <select
                         id="Gender"
                         name="Gender"
                         required
-                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="form-control"
                     >
                         <option value="">Select gender</option>
-                        <option value="male" <?php echo strtolower($trainee['Gender']) === 'male' ? 'selected' : ''; ?>>
+
+                        <option
+                            value="male"
+                            <?php echo strtolower($trainee['Gender']) === 'male' ? 'selected' : ''; ?>
+                        >
                             Male
                         </option>
-                        <option value="female" <?php echo strtolower($trainee['Gender']) === 'female' ? 'selected' : ''; ?>>
+
+                        <option
+                            value="female"
+                            <?php echo strtolower($trainee['Gender']) === 'female' ? 'selected' : ''; ?>
+                        >
                             Female
                         </option>
                     </select>
                 </div>
 
-                <div>
-                    <label for="Trade_Id" class="block text-sm font-semibold text-slate-700 mb-2">
-                        Assigned Trade
-                    </label>
+                <div class="form-group">
+                    <label for="Trade_Id">Assigned Trade</label>
 
                     <select
                         id="Trade_Id"
                         name="Trade_Id"
                         required
-                        class="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="form-control"
                     >
                         <option value="">Select a trade</option>
 
@@ -272,27 +516,28 @@ if (!$trades) {
                                 <?php echo escapeTrainee($trade['Trade_name']); ?>
                             </option>
                         <?php endwhile; ?>
+
                     </select>
                 </div>
 
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
-                    <p class="text-sm text-slate-600">
-                        <span class="font-semibold text-slate-800">Note:</span>
-                        Changing the assigned trade will update the trade associated with this trainee.
+                <div class="info-note">
+                    <p>
+                        <strong>Note:</strong>
+                        Changing the assigned trade will update the trade
+                        associated with this trainee.
                     </p>
                 </div>
 
-                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+                <div class="form-actions">
 
-                    <a href="listOfTrainee.php"
-                       class="inline-flex justify-center items-center px-5 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-md hover:bg-slate-100 transition">
+                    <a href="listOfTrainee.php" class="btn btn-cancel">
                         Cancel
                     </a>
 
                     <button
                         type="submit"
                         name="update"
-                        class="inline-flex justify-center items-center px-5 py-2.5 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 transition"
+                        class="btn btn-save"
                     >
                         Save Changes
                     </button>
@@ -300,6 +545,7 @@ if (!$trades) {
                 </div>
 
             </form>
+
         </section>
 
     </main>
