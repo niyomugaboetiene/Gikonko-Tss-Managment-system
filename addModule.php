@@ -10,19 +10,16 @@ if (!isset($_SESSION['username'])) {
 }
 
 $error = "";
-
 $moduleName = "";
 $tradeId = "";
 
 if (isset($_POST['addModule'])) {
-
     $moduleName = trim($_POST['Module_Name'] ?? "");
     $tradeId = trim($_POST['Trade_Id'] ?? "");
 
     if ($moduleName === "" || $tradeId === "") {
         $error = "Please complete all fields.";
     } else {
-
         $checkModule = mysqli_prepare(
             $conn,
             "SELECT Module_Id FROM modules WHERE Module_Name = ?"
@@ -35,7 +32,6 @@ if (isset($_POST['addModule'])) {
         if (mysqli_stmt_num_rows($checkModule) > 0) {
             $error = "This module already exists.";
         } else {
-
             $checkTrade = mysqli_prepare(
                 $conn,
                 "SELECT Trade_Id FROM trades WHERE Trade_Id = ?"
@@ -48,11 +44,9 @@ if (isset($_POST['addModule'])) {
             if (mysqli_stmt_num_rows($checkTrade) == 0) {
                 $error = "Selected trade does not exist.";
             } else {
-
                 $insertModule = mysqli_prepare(
                     $conn,
-                    "INSERT INTO modules (Module_Name, Trade_Id)
-                     VALUES (?, ?)"
+                    "INSERT INTO modules (Module_Name, Trade_Id) VALUES (?, ?)"
                 );
 
                 mysqli_stmt_bind_param(
@@ -87,221 +81,468 @@ $tradesQuery = mysqli_query(
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Add Module | GIKONKO TSS</title>
-
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 36px 24px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .breadcrumb a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            color: #1d4ed8;
+        }
+
+        .breadcrumb .current {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .page-heading h1 {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.6px;
+            color: #0f172a;
+        }
+
+        .page-heading p {
+            margin-top: 9px;
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 11px 17px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #334155;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .back-button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .form-wrapper {
+            max-width: 760px;
+        }
+
+        .form-card {
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+
+        .form-header {
+            padding: 23px 26px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .form-header p {
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 20px 26px 0;
+            padding: 13px 15px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #b91c1c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-icon {
+            font-weight: 700;
+        }
+
+        .module-form {
+            padding: 26px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 9px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #334155;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .field-description {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .form-divider {
+            height: 1px;
+            margin: 25px 0;
+            background: #f1f5f9;
+        }
+
+        .info-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 13px;
+            padding: 17px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+
+        .info-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .info-box h3 {
+            margin-bottom: 6px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .info-box p {
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 5px;
+        }
+
+        .cancel-button,
+        .submit-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 115px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .cancel-button {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+        }
+
+        .cancel-button:hover {
+            background: #f1f5f9;
+        }
+
+        .submit-button {
+            border: 1px solid #1d4ed8;
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .submit-button:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        .bottom-note {
+            margin-top: 19px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            .page-container {
+                padding: 25px 16px;
+            }
+
+            .page-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .page-heading h1 {
+                font-size: 25px;
+            }
+
+            .back-button {
+                width: 100%;
+            }
+
+            .form-header,
+            .module-form {
+                padding: 20px;
+            }
+
+            .error-message {
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .cancel-button,
+            .submit-button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
+<body>
 
-    <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="max-w-7xl mx-auto px-5 py-8 md:px-8">
+    <main class="page-container">
 
-        <div class="mb-8">
-
-            <div class="flex items-center gap-2 text-sm text-slate-500 mb-3">
-                <a href="listOfModule.php" class="hover:text-blue-700 transition">
-                    Module Management
-                </a>
-
-                <span>/</span>
-
-                <span class="text-slate-800 font-medium">
-                    Add Module
-                </span>
-            </div>
-
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                        Add New Module
-                    </h1>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        Create and assign a new learning module to a trade.
-                    </p>
-                </div>
-
-                <a href="listOfModule.php"
-                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 rounded-md text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 transition">
-
-                    <span>&larr;</span>
-                    Back to Modules
-
-                </a>
-
-            </div>
-
+        <div class="breadcrumb">
+            <a href="listOfModule.php">Module Management</a>
+            <span>/</span>
+            <span class="current">Add Module</span>
         </div>
 
+        <div class="page-heading">
+            <div>
+                <h1>Add New Module</h1>
+                <p>Create and assign a new learning module to a trade.</p>
+            </div>
 
-        <div class="max-w-3xl">
+            <a href="listOfModule.php" class="back-button">
+                <span>&larr;</span>
+                Back to Modules
+            </a>
+        </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div class="form-wrapper">
 
-                <div class="px-6 py-5 border-b border-slate-200">
+            <div class="form-card">
 
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Module Information
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Provide the module name and select its corresponding trade.
-                    </p>
-
+                <div class="form-header">
+                    <h2>Module Information</h2>
+                    <p>Provide the module name and select its corresponding trade.</p>
                 </div>
 
-
                 <?php if (!empty($error)): ?>
-
-                    <div class="mx-6 mt-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-
-                        <span class="font-bold">!</span>
-
-                        <p class="text-sm font-medium">
-                            <?php echo htmlspecialchars($error); ?>
-                        </p>
-
+                    <div class="error-message">
+                        <span class="error-icon">!</span>
+                        <p><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
                     </div>
-
                 <?php endif; ?>
 
+                <form method="POST" action="" class="module-form">
 
-                <form method="POST" action="" class="p-6 space-y-6">
-
-                    <div>
-
-                        <label for="Module_Name"
-                               class="block text-sm font-medium text-slate-700 mb-2">
-
-                            Module Name
-                            <span class="text-red-500">*</span>
-
+                    <div class="form-group">
+                        <label for="Module_Name">
+                            Module Name <span class="required">*</span>
                         </label>
 
                         <input
                             type="text"
                             id="Module_Name"
                             name="Module_Name"
-                            value="<?php echo htmlspecialchars($moduleName); ?>"
+                            value="<?php echo htmlspecialchars($moduleName, ENT_QUOTES, 'UTF-8'); ?>"
                             placeholder="Enter module name"
                             required
                             maxlength="150"
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                            class="form-control">
 
-                        <p class="text-xs text-slate-500 mt-2">
+                        <p class="field-description">
                             Enter the official name of the learning module.
                         </p>
-
                     </div>
 
+                    <div class="form-divider"></div>
 
-                    <div class="border-t border-slate-100"></div>
-
-
-                    <div>
-
-                        <label for="Trade_Id"
-                               class="block text-sm font-medium text-slate-700 mb-2">
-
-                            Select Trade
-                            <span class="text-red-500">*</span>
-
+                    <div class="form-group">
+                        <label for="Trade_Id">
+                            Select Trade <span class="required">*</span>
                         </label>
 
                         <select
                             id="Trade_Id"
                             name="Trade_Id"
                             required
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                            class="form-control">
 
                             <option value="">Select a trade</option>
 
                             <?php while ($data = mysqli_fetch_assoc($tradesQuery)): ?>
-
                                 <option
-                                    value="<?php echo htmlspecialchars($data['Trade_Id']); ?>"
+                                    value="<?php echo htmlspecialchars($data['Trade_Id'], ENT_QUOTES, 'UTF-8'); ?>"
                                     <?php echo ($tradeId == $data['Trade_Id']) ? 'selected' : ''; ?>>
 
-                                    <?php echo htmlspecialchars($data['Trade_Name']); ?>
+                                    <?php echo htmlspecialchars($data['Trade_Name'], ENT_QUOTES, 'UTF-8'); ?>
 
                                 </option>
-
                             <?php endwhile; ?>
 
                         </select>
 
-                        <p class="text-xs text-slate-500 mt-2">
+                        <p class="field-description">
                             Choose the trade where this module belongs.
                         </p>
-
                     </div>
 
+                    <div class="info-box">
+                        <span class="info-icon">i</span>
 
-                    <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
-
-                        <div class="flex items-start gap-3">
-
-                            <span class="text-blue-700 font-semibold">i</span>
-
-                            <div>
-                                <h3 class="text-sm font-semibold text-slate-800">
-                                    Before saving
-                                </h3>
-
-                                <p class="text-xs text-slate-500 mt-1">
-                                    Make sure the module name is correct and the appropriate trade has been selected.
-                                </p>
-                            </div>
-
+                        <div>
+                            <h3>Before saving</h3>
+                            <p>
+                                Make sure the module name is correct and
+                                the appropriate trade has been selected.
+                            </p>
                         </div>
-
                     </div>
 
-
-                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
-
-                        <a href="listOfModule.php"
-                           class="px-5 py-2.5 border border-slate-300 rounded-md text-sm font-semibold text-slate-700 text-center hover:bg-slate-100 transition">
-
+                    <div class="form-actions">
+                        <a href="listOfModule.php" class="cancel-button">
                             Cancel
-
                         </a>
 
                         <button
                             type="submit"
                             name="addModule"
-                            class="px-6 py-2.5 bg-blue-700 text-white rounded-md text-sm font-semibold hover:bg-blue-800 focus:ring-4 focus:ring-blue-100 transition">
-
+                            class="submit-button">
                             Save Module
-
                         </button>
-
                     </div>
 
                 </form>
 
             </div>
 
-
-            <div class="mt-5 text-sm text-slate-500">
-                Modules are organized under their respective trades for easier academic management.
-            </div>
+            <p class="bottom-note">
+                Modules are organized under their respective trades for
+                easier academic management.
+            </p>
 
         </div>
 
     </main>
-<?php include("footer.php"); ?>
+
+    <?php include("footer.php"); ?>
 
 </body>
 </html>

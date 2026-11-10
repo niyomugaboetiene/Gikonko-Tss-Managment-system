@@ -10,7 +10,6 @@ if (!isset($_SESSION['username'])) {
 }
 
 $error = "";
-$success = "";
 
 $selectedTrainee = $_POST['Trainee_Id'] ?? "";
 $selectedModule = $_POST['Module_Id'] ?? "";
@@ -27,6 +26,8 @@ if (isset($_POST['addMarks'])) {
     ) {
         $error = "Please complete all fields.";
     } elseif (
+        !ctype_digit((string)$selectedTrainee) ||
+        !ctype_digit((string)$selectedModule) ||
         !is_numeric($formativeValue) ||
         !is_numeric($summativeValue) ||
         $formativeValue < 0 ||
@@ -34,19 +35,18 @@ if (isset($_POST['addMarks'])) {
         $summativeValue < 0 ||
         $summativeValue > 50
     ) {
-        $error = "Marks must be between 0 and 50.";
+        $error = "Please provide valid trainee, module and assessment values.";
     } else {
 
         $Formative = (float)$formativeValue;
         $Summative = (float)$summativeValue;
 
-        // Check whether trainee exists
         $checkTrainee = mysqli_prepare(
             $conn,
             "SELECT Trainee_Id FROM trainees WHERE Trainee_Id = ?"
         );
 
-        mysqli_stmt_bind_param($checkTrainee, "s", $selectedTrainee);
+        mysqli_stmt_bind_param($checkTrainee, "i", $selectedTrainee);
         mysqli_stmt_execute($checkTrainee);
         mysqli_stmt_store_result($checkTrainee);
 
@@ -54,13 +54,12 @@ if (isset($_POST['addMarks'])) {
             $error = "Selected trainee does not exist.";
         } else {
 
-            // Check whether module exists
             $checkModule = mysqli_prepare(
                 $conn,
                 "SELECT Module_Id FROM modules WHERE Module_Id = ?"
             );
 
-            mysqli_stmt_bind_param($checkModule, "s", $selectedModule);
+            mysqli_stmt_bind_param($checkModule, "i", $selectedModule);
             mysqli_stmt_execute($checkModule);
             mysqli_stmt_store_result($checkModule);
 
@@ -68,7 +67,6 @@ if (isset($_POST['addMarks'])) {
                 $error = "Selected module does not exist.";
             } else {
 
-                // Prevent duplicate marks
                 $checkMarks = mysqli_prepare(
                     $conn,
                     "SELECT Trainee_Id FROM marks
@@ -77,7 +75,7 @@ if (isset($_POST['addMarks'])) {
 
                 mysqli_stmt_bind_param(
                     $checkMarks,
-                    "ss",
+                    "ii",
                     $selectedTrainee,
                     $selectedModule
                 );
@@ -95,7 +93,6 @@ if (isset($_POST['addMarks'])) {
                         ? "Competent"
                         : "Not Competent";
 
-                    // Insert marks
                     $insertMarks = mysqli_prepare(
                         $conn,
                         "INSERT INTO marks
@@ -106,7 +103,7 @@ if (isset($_POST['addMarks'])) {
 
                     mysqli_stmt_bind_param(
                         $insertMarks,
-                        "ssddds",
+                        "iiddds",
                         $selectedTrainee,
                         $selectedModule,
                         $Formative,
@@ -116,6 +113,11 @@ if (isset($_POST['addMarks'])) {
                     );
 
                     if (mysqli_stmt_execute($insertMarks)) {
+                        mysqli_stmt_close($insertMarks);
+                        mysqli_stmt_close($checkMarks);
+                        mysqli_stmt_close($checkModule);
+                        mysqli_stmt_close($checkTrainee);
+
                         header("Location: listOfMarks.php");
                         exit();
                     } else {
@@ -135,20 +137,22 @@ if (isset($_POST['addMarks'])) {
     }
 }
 
-// Fetch trainees
 $traineesQuery = mysqli_query(
     $conn,
     "SELECT Trainee_Id,
-    CONCAT(Firstname, ' ', Lastname) AS Trainee_Name
+    CONCAT(Firstname, ' ', lastname) AS Trainee_Name
     FROM trainees ORDER BY Firstname ASC"
 );
 
-// Fetch modules
 $modulesQuery = mysqli_query(
     $conn,
     "SELECT Module_Id, Module_Name
     FROM modules ORDER BY Module_Name ASC"
 );
+
+function escapeAddMarks($value) {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
 ?>
 
 <!DOCTYPE html>
@@ -160,173 +164,528 @@ $modulesQuery = mysqli_query(
 
     <title>Add Marks | GIKONKO TSS</title>
 
-<link href="output.css" rel="stylesheet">
- <link rel="icon" type="image/png" href="gikonko.png">
+    <link rel="icon" href="gikonko.png" type="image/png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 35px 24px 50px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .breadcrumb a {
+            color: #64748b;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            color: #1d4ed8;
+        }
+
+        .breadcrumb-current {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            color: #0f172a;
+            font-size: 29px;
+            font-weight: 750;
+            letter-spacing: -0.6px;
+        }
+
+        .page-description {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 9px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 11px 16px;
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .form-wrapper {
+            max-width: 850px;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+            overflow: hidden;
+        }
+
+        .form-card-header {
+            padding: 23px 26px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-card-header h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .form-card-header p {
+            margin-top: 7px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .error-message {
+            margin: 20px 26px 0;
+            padding: 13px 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #b91c1c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-icon {
+            font-weight: 800;
+        }
+
+        .form-body {
+            padding: 26px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .section-heading {
+            margin-bottom: 17px;
+        }
+
+        .section-heading h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .section-heading p {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            min-width: 0;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 9px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 44px;
+            padding: 0 13px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            color: #334155;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper .form-control {
+            padding-right: 55px;
+        }
+
+        .input-suffix {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .form-divider {
+            height: 1px;
+            background: #f1f5f9;
+            margin: 25px 0;
+        }
+
+        .result-preview {
+            padding: 21px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            margin-bottom: 25px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .preview-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .preview-header span {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .preview-label {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 7px;
+        }
+
+        .preview-total {
+            color: #0f172a;
+            font-size: 25px;
+            font-weight: 750;
+        }
+
+        .preview-decision {
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .decision-competent {
+            color: #15803d;
+        }
+
+        .decision-not-competent {
+            color: #dc2626;
+        }
+
+        .preview-note {
+            margin-top: 18px;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            padding-top: 5px;
+        }
+
+        .cancel-button,
+        .submit-button {
+            min-height: 43px;
+            padding: 0 21px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cancel-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+        }
+
+        .cancel-button:hover {
+            background: #f1f5f9;
+        }
+
+        .submit-button {
+            color: #ffffff;
+            background: #1d4ed8;
+            border: 1px solid #1d4ed8;
+        }
+
+        .submit-button:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        .information-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .information-icon {
+            color: #2563eb;
+            font-weight: 800;
+        }
+
+        @media (max-width: 700px) {
+            .page-container {
+                padding: 25px 16px 40px;
+            }
+
+            .page-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .back-button {
+                width: 100%;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 17px;
+            }
+
+            .form-card-header,
+            .form-body {
+                padding: 20px;
+            }
+
+            .error-message {
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+        }
+
+        @media (max-width: 450px) {
+            .preview-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .preview-total {
+                font-size: 22px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .cancel-button,
+            .submit-button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
+<body>
 
-    <!-- Navigation -->
-    <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <!-- Main content -->
-    <main class="max-w-7xl mx-auto px-5 py-8 md:px-8">
+    <main class="page-container">
 
-        <!-- Page heading -->
-        <div class="mb-8">
-
-            <div class="flex items-center gap-2 text-sm text-slate-500 mb-3">
-                <a href="listOfMarks.php"
-                   class="hover:text-blue-700 transition">
-                    Marks Management
-                </a>
-
-                <span>/</span>
-
-                <span class="text-slate-800 font-medium">
-                    Add Marks
-                </span>
-            </div>
-
-            <div class="flex flex-col md:flex-row md:items-center
-                        md:justify-between gap-4">
-
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold
-                               tracking-tight text-slate-900">
-                        Add Student Marks
-                    </h1>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        Record formative and summative assessment
-                        results for your trainees.
-                    </p>
-                </div>
-
-                <a href="listOfMarks.php"
-                   class="inline-flex items-center justify-center gap-2
-                          px-4 py-2.5 border border-slate-300
-                          rounded-md text-sm font-semibold
-                          text-slate-700 bg-white
-                          hover:bg-slate-100 transition">
-
-                    <span>&larr;</span>
-                    Back to Marks
-                </a>
-
-            </div>
+        <div class="breadcrumb">
+            <a href="listOfMarks.php">Marks Management</a>
+            <span>/</span>
+            <span class="breadcrumb-current">Add Marks</span>
         </div>
 
+        <div class="page-heading">
 
-        <!-- Form layout -->
-        <div class="max-w-3xl">
+            <div>
+                <h1 class="page-title">Add Student Marks</h1>
 
-            <div class="bg-white border border-slate-200
-                        rounded-lg shadow-sm">
+                <p class="page-description">
+                    Record formative and summative assessment results for your trainees.
+                </p>
+            </div>
 
-                <!-- Form header -->
-                <div class="px-6 py-5 border-b border-slate-200">
+            <a href="listOfMarks.php" class="back-button">
+                <span>&larr;</span>
+                Back to Marks
+            </a>
 
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Assessment Information
-                    </h2>
+        </div>
 
-                    <p class="text-sm text-slate-500 mt-1">
-                        Enter the trainee's assessment details below.
-                    </p>
+        <div class="form-wrapper">
 
+            <div class="form-card">
+
+                <div class="form-card-header">
+                    <h2>Assessment Information</h2>
+                    <p>Enter the trainee's assessment details below.</p>
                 </div>
 
-
-                <!-- Error message -->
                 <?php if (!empty($error)): ?>
 
-                    <div class="mx-6 mt-5 flex items-start gap-3
-                                bg-red-50 border border-red-200
-                                text-red-700 px-4 py-3 rounded-md">
-
-                        <span class="font-bold">!</span>
-
-                        <p class="text-sm font-medium">
-                            <?php echo htmlspecialchars($error); ?>
-                        </p>
-
+                    <div class="error-message">
+                        <span class="error-icon">!</span>
+                        <p><?php echo escapeAddMarks($error); ?></p>
                     </div>
 
                 <?php endif; ?>
 
+                <form method="POST" class="form-body">
 
-                <form method="POST" class="p-6 space-y-6">
+                    <section class="form-section">
 
-                    <!-- Trainee section -->
-                    <div>
-
-                        <div class="mb-4">
-                            <h3 class="text-sm font-semibold
-                                       text-slate-900">
-                                Trainee Details
-                            </h3>
-
-                            <p class="text-xs text-slate-500 mt-1">
-                                Select the trainee whose marks you
-                                want to record.
-                            </p>
+                        <div class="section-heading">
+                            <h3>Trainee Details</h3>
+                            <p>Select the trainee whose marks you want to record.</p>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="form-grid">
 
-                            <!-- Trainee name -->
-                            <div>
+                            <div class="form-group">
 
-                                <label for="Trainee_Id_Select"
-                                       class="block text-sm font-medium
-                                              text-slate-700 mb-2">
-                                    Trainee Name
-                                    <span class="text-red-500">*</span>
+                                <label for="Trainee_Id_Select" class="form-label">
+                                    Trainee Name <span class="required">*</span>
                                 </label>
 
                                 <select
                                     id="Trainee_Id_Select"
-                                    class="w-full px-3 py-2.5
-                                           border border-slate-300
-                                           rounded-md bg-white
-                                           text-sm text-slate-700
-                                           outline-none
-                                           focus:border-blue-600
-                                           focus:ring-2
-                                           focus:ring-blue-100
-                                           transition"
-                                    required>
+                                    class="form-control"
+                                    required
+                                >
+                                    <option value="">Select a trainee</option>
 
-                                    <option value="">
-                                        Select a trainee
-                                    </option>
+                                    <?php if ($traineesQuery): ?>
+                                        <?php while ($data = mysqli_fetch_assoc($traineesQuery)): ?>
 
-                                    <?php while ($data = mysqli_fetch_assoc($traineesQuery)): ?>
+                                            <option
+                                                value="<?php echo escapeAddMarks($data['Trainee_Id']); ?>"
+                                                <?php echo ($selectedTrainee == $data['Trainee_Id']) ? 'selected' : ''; ?>
+                                            >
+                                                <?php echo escapeAddMarks($data['Trainee_Name']); ?>
+                                            </option>
 
-                                        <option
-                                            value="<?php echo htmlspecialchars($data['Trainee_Id']); ?>"
-                                            <?php echo ($selectedTrainee == $data['Trainee_Id']) ? 'selected' : ''; ?>>
-
-                                            <?php echo htmlspecialchars($data['Trainee_Name']); ?>
-
-                                        </option>
-
-                                    <?php endwhile; ?>
+                                        <?php endwhile; ?>
+                                    <?php endif; ?>
 
                                 </select>
 
                             </div>
 
+                            <div class="form-group">
 
-                            <!-- Trainee code -->
-                            <div>
-
-                                <label for="Trainee_Id"
-                                       class="block text-sm font-medium
-                                              text-slate-700 mb-2">
+                                <label for="Trainee_Id" class="form-label">
                                     Trainee Code
                                 </label>
 
@@ -334,109 +693,78 @@ $modulesQuery = mysqli_query(
                                     type="text"
                                     name="Trainee_Id"
                                     id="Trainee_Id"
-                                    value="<?php echo htmlspecialchars($selectedTrainee); ?>"
+                                    value="<?php echo escapeAddMarks($selectedTrainee); ?>"
                                     placeholder="Automatically populated"
                                     readonly
                                     required
-                                    class="w-full px-3 py-2.5
-                                           border border-slate-200
-                                           rounded-md bg-slate-100
-                                           text-sm text-slate-600
-                                           outline-none cursor-not-allowed">
+                                    class="form-control"
+                                >
 
                             </div>
 
                         </div>
 
-                    </div>
+                    </section>
 
+                    <div class="form-divider"></div>
 
-                    <div class="border-t border-slate-100"></div>
+                    <section class="form-section">
 
-
-                    <!-- Module section -->
-                    <div>
-
-                        <h3 class="text-sm font-semibold text-slate-900 mb-4">
-                            Module Information
-                        </h3>
-
-                        <label for="Module_Id"
-                               class="block text-sm font-medium
-                                      text-slate-700 mb-2">
-
-                            Module Name
-                            <span class="text-red-500">*</span>
-
-                        </label>
-
-                        <select
-                            id="Module_Id"
-                            name="Module_Id"
-                            required
-                            class="w-full px-3 py-2.5
-                                   border border-slate-300
-                                   rounded-md bg-white
-                                   text-sm text-slate-700
-                                   outline-none
-                                   focus:border-blue-600
-                                   focus:ring-2
-                                   focus:ring-blue-100
-                                   transition">
-
-                            <option value="">
-                                Select a module
-                            </option>
-
-                            <?php while ($data = mysqli_fetch_assoc($modulesQuery)): ?>
-
-                                <option
-                                    value="<?php echo htmlspecialchars($data['Module_Id']); ?>"
-                                    <?php echo ($selectedModule == $data['Module_Id']) ? 'selected' : ''; ?>>
-
-                                    <?php echo htmlspecialchars($data['Module_Name']); ?>
-
-                                </option>
-
-                            <?php endwhile; ?>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="border-t border-slate-100"></div>
-
-
-                    <!-- Marks section -->
-                    <div>
-
-                        <div class="mb-4">
-                            <h3 class="text-sm font-semibold text-slate-900">
-                                Assessment Results
-                            </h3>
-
-                            <p class="text-xs text-slate-500 mt-1">
-                                Each assessment carries a maximum of 50 marks.
-                            </p>
+                        <div class="section-heading">
+                            <h3>Module Information</h3>
                         </div>
 
+                        <div class="form-group">
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <label for="Module_Id" class="form-label">
+                                Module Name <span class="required">*</span>
+                            </label>
 
-                            <!-- Formative -->
-                            <div>
+                            <select
+                                id="Module_Id"
+                                name="Module_Id"
+                                required
+                                class="form-control"
+                            >
+                                <option value="">Select a module</option>
 
-                                <label for="Formative_Assessment"
-                                       class="block text-sm font-medium
-                                              text-slate-700 mb-2">
+                                <?php if ($modulesQuery): ?>
+                                    <?php while ($data = mysqli_fetch_assoc($modulesQuery)): ?>
 
-                                    Formative Assessment
-                                    <span class="text-red-500">*</span>
+                                        <option
+                                            value="<?php echo escapeAddMarks($data['Module_Id']); ?>"
+                                            <?php echo ($selectedModule == $data['Module_Id']) ? 'selected' : ''; ?>
+                                        >
+                                            <?php echo escapeAddMarks($data['Module_Name']); ?>
+                                        </option>
 
+                                    <?php endwhile; ?>
+                                <?php endif; ?>
+
+                            </select>
+
+                        </div>
+
+                    </section>
+
+                    <div class="form-divider"></div>
+
+                    <section class="form-section">
+
+                        <div class="section-heading">
+                            <h3>Assessment Results</h3>
+                            <p>Each assessment carries a maximum of 50 marks.</p>
+                        </div>
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="Formative_Assessment" class="form-label">
+                                    Formative Assessment <span class="required">*</span>
                                 </label>
 
-                                <div class="relative">
+                                <div class="input-wrapper">
 
                                     <input
                                         type="number"
@@ -446,40 +774,24 @@ $modulesQuery = mysqli_query(
                                         max="50"
                                         step="1"
                                         required
-                                        value="<?php echo htmlspecialchars($formativeValue); ?>"
+                                        value="<?php echo escapeAddMarks($formativeValue); ?>"
                                         placeholder="Enter marks"
-                                        class="w-full px-3 py-2.5 pr-14
-                                               border border-slate-300
-                                               rounded-md bg-white
-                                               text-sm outline-none
-                                               focus:border-blue-600
-                                               focus:ring-2
-                                               focus:ring-blue-100">
+                                        class="form-control"
+                                    >
 
-                                    <span class="absolute right-3 top-1/2
-                                                 -translate-y-1/2
-                                                 text-xs text-slate-400">
-                                        / 50
-                                    </span>
+                                    <span class="input-suffix">/ 50</span>
 
                                 </div>
 
                             </div>
 
+                            <div class="form-group">
 
-                            <!-- Summative -->
-                            <div>
-
-                                <label for="Summative_Assessment"
-                                       class="block text-sm font-medium
-                                              text-slate-700 mb-2">
-
-                                    Summative Assessment
-                                    <span class="text-red-500">*</span>
-
+                                <label for="Summative_Assessment" class="form-label">
+                                    Summative Assessment <span class="required">*</span>
                                 </label>
 
-                                <div class="relative">
+                                <div class="input-wrapper">
 
                                     <input
                                         type="number"
@@ -489,21 +801,12 @@ $modulesQuery = mysqli_query(
                                         max="50"
                                         step="1"
                                         required
-                                        value="<?php echo htmlspecialchars($summativeValue); ?>"
+                                        value="<?php echo escapeAddMarks($summativeValue); ?>"
                                         placeholder="Enter marks"
-                                        class="w-full px-3 py-2.5 pr-14
-                                               border border-slate-300
-                                               rounded-md bg-white
-                                               text-sm outline-none
-                                               focus:border-blue-600
-                                               focus:ring-2
-                                               focus:ring-blue-100">
+                                        class="form-control"
+                                    >
 
-                                    <span class="absolute right-3 top-1/2
-                                                 -translate-y-1/2
-                                                 text-xs text-slate-400">
-                                        / 50
-                                    </span>
+                                    <span class="input-suffix">/ 50</span>
 
                                 </div>
 
@@ -511,88 +814,50 @@ $modulesQuery = mysqli_query(
 
                         </div>
 
-                    </div>
+                    </section>
 
+                    <div class="result-preview">
 
-                    <!-- Automatic result preview -->
-                    <div class="bg-slate-50 border border-slate-200
-                                rounded-md p-5">
-
-                        <div class="flex justify-between items-center
-                                    mb-4">
-
-                            <h3 class="text-sm font-semibold text-slate-800">
-                                Results Preview
-                            </h3>
-
-                            <span class="text-xs text-slate-500">
-                                Calculated automatically
-                            </span>
-
+                        <div class="preview-header">
+                            <h3>Results Preview</h3>
+                            <span>Calculated automatically</span>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="preview-grid">
 
                             <div>
-                                <p class="text-xs text-slate-500 mb-1">
-                                    Total Marks
-                                </p>
-
-                                <p id="totalMarks"
-                                   class="text-2xl font-bold text-slate-900">
-                                    0 / 100
-                                </p>
+                                <p class="preview-label">Total Marks</p>
+                                <p id="totalMarks" class="preview-total">0 / 100</p>
                             </div>
 
                             <div>
-                                <p class="text-xs text-slate-500 mb-1">
-                                    Decision
-                                </p>
-
-                                <p id="decision"
-                                   class="text-sm font-semibold text-slate-500 mt-2">
+                                <p class="preview-label">Decision</p>
+                                <p id="decision" class="preview-decision">
                                     Waiting for marks
                                 </p>
                             </div>
 
                         </div>
 
-                        <p class="text-xs text-slate-500 mt-4">
+                        <p class="preview-note">
                             Competent: 70 marks or above.
                             Not Competent: Below 70 marks.
                         </p>
 
                     </div>
 
+                    <div class="form-actions">
 
-                    <!-- Form buttons -->
-                    <div class="flex flex-col-reverse sm:flex-row
-                                justify-end gap-3 pt-2">
-
-                        <a href="listOfMarks.php"
-                           class="px-5 py-2.5 border
-                                  border-slate-300 rounded-md
-                                  text-sm font-semibold
-                                  text-slate-700 text-center
-                                  hover:bg-slate-100 transition">
-
+                        <a href="listOfMarks.php" class="cancel-button">
                             Cancel
-
                         </a>
 
                         <button
                             type="submit"
                             name="addMarks"
-                            class="px-6 py-2.5 bg-blue-700
-                                   text-white rounded-md
-                                   text-sm font-semibold
-                                   hover:bg-blue-800
-                                   focus:ring-4
-                                   focus:ring-blue-100
-                                   transition">
-
+                            class="submit-button"
+                        >
                             Save Marks
-
                         </button>
 
                     </div>
@@ -601,54 +866,34 @@ $modulesQuery = mysqli_query(
 
             </div>
 
-
-            <!-- Additional information -->
-            <div class="mt-5 flex items-start gap-3
-                        text-sm text-slate-500">
-
-                <span class="text-blue-700 font-semibold">i</span>
-
+            <div class="information-note">
+                <span class="information-icon">i</span>
                 <p>
-                    Please verify the trainee and module before
-                    saving marks. Each trainee can have only one
-                    marks record per module.
+                    Please verify the trainee and module before saving marks.
+                    Each trainee can have only one marks record per module.
                 </p>
-
             </div>
 
         </div>
 
     </main>
 
+    <?php include("footer.php"); ?>
 
-<?php include("footer.php"); ?>
-
-
-    <!-- JavaScript -->
     <script>
-
-        // Automatically populate trainee code
         const traineeSelect = document.getElementById('Trainee_Id_Select');
-
         const traineeCode = document.getElementById('Trainee_Id');
 
         traineeSelect.addEventListener('change', function () {
             traineeCode.value = this.value;
         });
 
-
-        // Assessment marks calculation
         const formative = document.getElementById('Formative_Assessment');
-
         const summative = document.getElementById('Summative_Assessment');
-
         const totalMarks = document.getElementById('totalMarks');
-
         const decision = document.getElementById('decision');
 
-
         function calculateMarks() {
-
             const f = formative.value;
             const s = summative.value;
 
@@ -661,12 +906,8 @@ $modulesQuery = mysqli_query(
                 Number(s) > 50
             ) {
                 totalMarks.textContent = "0 / 100";
-
                 decision.textContent = "Waiting for marks";
-
-                decision.className =
-                    "text-sm font-semibold text-slate-500 mt-2";
-
+                decision.className = "preview-decision";
                 return;
             }
 
@@ -675,31 +916,18 @@ $modulesQuery = mysqli_query(
             totalMarks.textContent = total + " / 100";
 
             if (total >= 70) {
-
                 decision.textContent = "Competent";
-
-                decision.className =
-                    "text-sm font-semibold text-green-700 mt-2";
-
+                decision.className = "preview-decision decision-competent";
             } else {
-
                 decision.textContent = "Not Competent";
-
-                decision.className =
-                    "text-sm font-semibold text-red-600 mt-2";
-
+                decision.className = "preview-decision decision-not-competent";
             }
-
         }
 
-
         formative.addEventListener('input', calculateMarks);
-
         summative.addEventListener('input', calculateMarks);
 
-        // Calculate again when validation fails and values are restored
         calculateMarks();
-
     </script>
 
 </body>

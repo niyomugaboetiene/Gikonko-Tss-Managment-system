@@ -13,13 +13,11 @@ $error = "";
 $tradeName = "";
 
 if (isset($_POST['add'])) {
-
     $tradeName = trim($_POST['Trade_name'] ?? "");
 
     if ($tradeName === "") {
         $error = "Please enter a trade name.";
     } else {
-
         $checkTrade = mysqli_prepare(
             $conn,
             "SELECT Trade_Id FROM trades WHERE Trade_name = ?"
@@ -32,7 +30,6 @@ if (isset($_POST['add'])) {
         if (mysqli_stmt_num_rows($checkTrade) > 0) {
             $error = "This trade already exists.";
         } else {
-
             $insertTrade = mysqli_prepare(
                 $conn,
                 "INSERT INTO trades (Trade_name) VALUES (?)"
@@ -57,171 +54,422 @@ if (isset($_POST['add'])) {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Add Trade | GIKONKO TSS</title>
-
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 36px 24px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .breadcrumb a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            color: #1d4ed8;
+        }
+
+        .breadcrumb .current {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .page-heading h1 {
+            color: #0f172a;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.6px;
+        }
+
+        .page-heading p {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 11px 17px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .back-button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .form-wrapper {
+            max-width: 760px;
+        }
+
+        .form-card {
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+
+        .form-header {
+            padding: 23px 26px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-header h2 {
+            color: #0f172a;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .form-header p {
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 20px 26px 0;
+            padding: 13px 15px;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            background: #fef2f2;
+            color: #b91c1c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-icon {
+            font-weight: 700;
+        }
+
+        .trade-form {
+            padding: 26px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 9px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #334155;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .field-description {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .info-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 13px;
+            margin-bottom: 25px;
+            padding: 17px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+
+        .info-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .info-box h3 {
+            margin-bottom: 6px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .info-box p {
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 5px;
+        }
+
+        .cancel-button,
+        .submit-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 115px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .cancel-button {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+        }
+
+        .cancel-button:hover {
+            background: #f1f5f9;
+        }
+
+        .submit-button {
+            border: 1px solid #1d4ed8;
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .submit-button:hover {
+            border-color: #1e40af;
+            background: #1e40af;
+        }
+
+        .bottom-note {
+            margin-top: 19px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            .page-container {
+                padding: 25px 16px;
+            }
+
+            .page-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .page-heading h1 {
+                font-size: 25px;
+            }
+
+            .back-button {
+                width: 100%;
+            }
+
+            .form-header,
+            .trade-form {
+                padding: 20px;
+            }
+
+            .error-message {
+                margin-right: 20px;
+                margin-left: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .cancel-button,
+            .submit-button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
+<body>
 
-    <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="max-w-7xl mx-auto px-5 py-8 md:px-8">
+    <main class="page-container">
 
-        <div class="mb-8">
-
-            <div class="flex items-center gap-2 text-sm text-slate-500 mb-3">
-
-                <a href="listOfTrades.php"
-                   class="hover:text-blue-700 transition">
-                    Trade Management
-                </a>
-
-                <span>/</span>
-
-                <span class="text-slate-800 font-medium">
-                    Add Trade
-                </span>
-
-            </div>
-
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-                <div>
-
-                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                        Add New Trade
-                    </h1>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        Create a new academic trade in your institution.
-                    </p>
-
-                </div>
-
-                <a href="listOfTrades.php"
-                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 rounded-md text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 transition">
-
-                    <span>&larr;</span>
-                    Back to Trades
-
-                </a>
-
-            </div>
-
+        <div class="breadcrumb">
+            <a href="listOfTrades.php">Trade Management</a>
+            <span>/</span>
+            <span class="current">Add Trade</span>
         </div>
 
+        <div class="page-heading">
+            <div>
+                <h1>Add New Trade</h1>
+                <p>Create a new academic trade in your institution.</p>
+            </div>
 
-        <div class="max-w-3xl">
+            <a href="listOfTrades.php" class="back-button">
+                <span>&larr;</span>
+                Back to Trades
+            </a>
+        </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div class="form-wrapper">
 
-                <div class="px-6 py-5 border-b border-slate-200">
+            <div class="form-card">
 
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Trade Information
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Enter the official name of the new trade below.
-                    </p>
-
+                <div class="form-header">
+                    <h2>Trade Information</h2>
+                    <p>Enter the official name of the new trade below.</p>
                 </div>
 
-
                 <?php if (!empty($error)): ?>
-
-                    <div class="mx-6 mt-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-
-                        <span class="font-bold">!</span>
-
-                        <p class="text-sm font-medium">
-                            <?php echo htmlspecialchars($error); ?>
+                    <div class="error-message">
+                        <span class="error-icon">!</span>
+                        <p>
+                            <?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
                         </p>
-
                     </div>
-
                 <?php endif; ?>
 
+                <form method="POST" action="" class="trade-form">
 
-                <form method="POST" action="" class="p-6 space-y-6">
+                    <div class="form-group">
 
-                    <div>
-
-                        <label for="Trade_name"
-                               class="block text-sm font-medium text-slate-700 mb-2">
-
-                            Trade Name
-                            <span class="text-red-500">*</span>
-
+                        <label for="Trade_name">
+                            Trade Name <span class="required">*</span>
                         </label>
 
                         <input
                             type="text"
                             id="Trade_name"
                             name="Trade_name"
-                            value="<?php echo htmlspecialchars($tradeName); ?>"
+                            value="<?php echo htmlspecialchars($tradeName, ENT_QUOTES, 'UTF-8'); ?>"
                             placeholder="Enter trade name"
                             maxlength="150"
                             required
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                            class="form-control">
 
-                        <p class="text-xs text-slate-500 mt-2">
+                        <p class="field-description">
                             Example: Software Development, Networking or Electrical Technology.
                         </p>
 
                     </div>
 
+                    <div class="info-box">
 
-                    <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+                        <span class="info-icon">i</span>
 
-                        <div class="flex items-start gap-3">
+                        <div>
+                            <h3>Important Information</h3>
 
-                            <span class="text-blue-700 font-semibold">i</span>
-
-                            <div>
-
-                                <h3 class="text-sm font-semibold text-slate-800">
-                                    Important Information
-                                </h3>
-
-                                <p class="text-xs text-slate-500 mt-1">
-                                    A trade represents an academic specialization.
-                                    Modules can be assigned to a trade after it has
-                                    been created.
-                                </p>
-
-                            </div>
-
+                            <p>
+                                A trade represents an academic specialization.
+                                Modules can be assigned to a trade after it has
+                                been created.
+                            </p>
                         </div>
 
                     </div>
 
+                    <div class="form-actions">
 
-                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
-
-                        <a href="listOfTrades.php"
-                           class="px-5 py-2.5 border border-slate-300 rounded-md text-sm font-semibold text-slate-700 text-center hover:bg-slate-100 transition">
-
+                        <a href="listOfTrades.php" class="cancel-button">
                             Cancel
-
                         </a>
 
                         <button
                             type="submit"
                             name="add"
-                            class="px-6 py-2.5 bg-blue-700 text-white rounded-md text-sm font-semibold hover:bg-blue-800 focus:ring-4 focus:ring-blue-100 transition">
-
+                            class="submit-button">
                             Add Trade
-
                         </button>
 
                     </div>
@@ -230,10 +478,10 @@ if (isset($_POST['add'])) {
 
             </div>
 
-
-            <div class="mt-5 text-sm text-slate-500">
-                Organize your institution's academic programs by creating and managing trades.
-            </div>
+            <p class="bottom-note">
+                Organize your institution's academic programs by creating
+                and managing trades.
+            </p>
 
         </div>
 
