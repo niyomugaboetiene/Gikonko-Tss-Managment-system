@@ -556,7 +556,7 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
                         <div class="hero-actions">
 
-                            <a href="greetingUser.php" class="btn btn-primary">
+                            <a href="Dashboard.php" class="btn btn-primary">
                                 Administration Dashboard
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round"
