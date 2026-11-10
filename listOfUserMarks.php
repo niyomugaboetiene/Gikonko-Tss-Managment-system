@@ -1,6 +1,7 @@
 
 <?php
 include("conn.php");
+
 session_start();
 
 if (!isset($_SESSION['Firstname']) || !isset($_SESSION['Trainee_Id'])) {
@@ -80,211 +81,588 @@ mysqli_stmt_close($stmt);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Academic Results | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 50;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+            padding: 125px 24px 55px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .page-title {
+            margin-top: 9px;
+            color: #1e293b;
+            font-size: 30px;
+            font-weight: 750;
+        }
+
+        .page-description {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 16px;
+            color: #475569;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 650;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #f1f5f9;
+        }
+
+        .btn svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 17px;
+            padding: 23px;
+            margin-bottom: 25px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+        }
+
+        .profile-avatar {
+            width: 58px;
+            height: 58px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1d4ed8;
+            background: #eff6ff;
+            border-radius: 50%;
+            font-size: 21px;
+            font-weight: 750;
+        }
+
+        .profile-label {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .profile-name {
+            margin-top: 6px;
+            color: #1e293b;
+            font-size: 20px;
+            font-weight: 750;
+        }
+
+        .profile-code {
+            margin-top: 6px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            padding: 21px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .stat-number {
+            margin-top: 12px;
+            color: #1e293b;
+            font-size: 30px;
+            font-weight: 750;
+            line-height: 1.1;
+        }
+
+        .stat-blue {
+            color: #1d4ed8;
+        }
+
+        .stat-green {
+            color: #047857;
+        }
+
+        .stat-red {
+            color: #dc2626;
+        }
+
+        .stat-note {
+            margin-top: 12px;
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .results-section {
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+        }
+
+        .section-header {
+            padding: 22px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            color: #1e293b;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .section-description {
+            margin-top: 6px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .results-table thead {
+            color: #64748b;
+            background: #f8fafc;
+        }
+
+        .results-table th {
+            padding: 15px 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .results-table td {
+            padding: 17px 20px;
+            color: #475569;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .results-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .module-code {
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .module-name {
+            color: #1e293b;
+            font-weight: 650;
+        }
+
+        .mark-value {
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .total-value {
+            color: #1e293b;
+            font-weight: 750;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .decision-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 11px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .competent {
+            color: #047857;
+            background: #ecfdf5;
+        }
+
+        .not-competent {
+            color: #b91c1c;
+            background: #fef2f2;
+        }
+
+        .empty-state {
+            padding: 60px 20px !important;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            color: #94a3b8;
+            background: #f1f5f9;
+            border-radius: 50%;
+        }
+
+        .empty-icon svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        .empty-title {
+            margin-top: 16px;
+            color: #1e293b;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .empty-description {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 15px 22px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .table-footer p {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        @media (max-width: 1000px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 115px 16px 40px;
+            }
+
+            .page-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .page-title {
+                font-size: 25px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-card {
+                align-items: flex-start;
+                padding: 18px;
+            }
+
+            .profile-avatar {
+                width: 48px;
+                height: 48px;
+                font-size: 18px;
+            }
+
+            .profile-name {
+                font-size: 17px;
+            }
+
+            .table-footer {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body>
 
-<header class="w-full fixed top-0 left-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+<header class="site-header">
     <?php include("userDashboard.php"); ?>
 </header>
 
-<main class="flex-grow pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+<main>
+    <div class="container">
 
-    <div class="max-w-7xl mx-auto">
-
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-
+        <div class="page-heading">
             <div>
-                <p class="text-sm font-medium text-blue-700 uppercase tracking-wider">
-                    Student Academic Portal
-                </p>
+                <p class="eyebrow">Student Academic Portal</p>
 
-                <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-2">
-                    My Academic Results
-                </h1>
+                <h1 class="page-title">My Academic Results</h1>
 
-                <p class="text-sm text-slate-500 mt-2">
+                <p class="page-description">
                     View your assessment marks and competency results.
                 </p>
             </div>
 
-            <a href="userPage.php"
-               class="inline-flex items-center justify-center px-4 py-2.5 border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-50 transition">
-
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="userPage.php" class="btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-
                 Back to Dashboard
             </a>
-
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-5 sm:p-6 mb-8">
+        <div class="profile-card">
 
-            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="profile-avatar">
+                <?php echo e(strtoupper(substr($_SESSION['Firstname'], 0, 1))); ?>
+            </div>
 
-                <div class="w-14 h-14 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-xl font-bold">
-                    <?php echo e(strtoupper(substr($_SESSION['Firstname'], 0, 1))); ?>
-                </div>
+            <div>
+                <p class="profile-label">Student Profile</p>
 
-                <div>
-                    <p class="text-xs uppercase tracking-wider font-semibold text-slate-500">
-                        Student Profile
-                    </p>
+                <h2 class="profile-name">
+                    <?php echo e($_SESSION['Firstname']); ?>
+                </h2>
 
-                    <h2 class="text-xl font-bold text-slate-800 mt-1">
-                        <?php echo e($_SESSION['Firstname']); ?>
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Trainee Code: #<?php echo e($Trainee_Id); ?>
-                    </p>
-                </div>
-
+                <p class="profile-code">
+                    Trainee Code: #<?php echo e($Trainee_Id); ?>
+                </p>
             </div>
 
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div class="stats-grid">
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <p class="text-sm font-medium text-slate-500">
-                    Modules Assessed
-                </p>
+            <div class="stat-card">
+                <p class="stat-label">Modules Assessed</p>
 
-                <h2 class="text-3xl font-bold text-slate-800 mt-2">
+                <h2 class="stat-number">
                     <?php echo $totalRecords; ?>
                 </h2>
 
-                <p class="text-xs text-slate-400 mt-3">
+                <p class="stat-note">
                     Available assessment records
                 </p>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <p class="text-sm font-medium text-slate-500">
-                    Average Marks
-                </p>
+            <div class="stat-card">
+                <p class="stat-label">Average Marks</p>
 
-                <h2 class="text-3xl font-bold text-blue-700 mt-2">
+                <h2 class="stat-number stat-blue">
                     <?php echo number_format($averageMarks, 1); ?>%
                 </h2>
 
-                <p class="text-xs text-slate-400 mt-3">
+                <p class="stat-note">
                     Average across assessed modules
                 </p>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <p class="text-sm font-medium text-slate-500">
-                    Competent
-                </p>
+            <div class="stat-card">
+                <p class="stat-label">Competent</p>
 
-                <h2 class="text-3xl font-bold text-emerald-700 mt-2">
+                <h2 class="stat-number stat-green">
                     <?php echo $competentCount; ?>
                 </h2>
 
-                <p class="text-xs text-slate-400 mt-3">
+                <p class="stat-note">
                     Modules with 70 marks or above
                 </p>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <p class="text-sm font-medium text-slate-500">
-                    Not Competent
-                </p>
+            <div class="stat-card">
+                <p class="stat-label">Not Competent</p>
 
-                <h2 class="text-3xl font-bold text-red-600 mt-2">
+                <h2 class="stat-number stat-red">
                     <?php echo $notCompetentCount; ?>
                 </h2>
 
-                <p class="text-xs text-slate-400 mt-3">
+                <p class="stat-note">
                     Modules below 70 marks
                 </p>
             </div>
 
         </div>
 
-        <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <section class="results-section">
 
-            <div class="p-5 sm:p-6 border-b border-slate-200">
+            <div class="section-header">
+                <h2 class="section-title">
+                    Assessment Records
+                </h2>
 
-                <div>
-                    <h2 class="text-lg font-bold text-slate-800">
-                        Assessment Records
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Your formative, summative and final assessment results.
-                    </p>
-                </div>
-
+                <p class="section-description">
+                    Your formative, summative and final assessment results.
+                </p>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="table-wrapper">
 
-                <table class="w-full text-sm text-left whitespace-nowrap">
+                <table class="results-table">
 
-                    <thead class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider">
-
+                    <thead>
                         <tr>
-                            <th class="px-5 py-4 font-semibold">Module Code</th>
-                            <th class="px-5 py-4 font-semibold">Module Name</th>
-                            <th class="px-5 py-4 font-semibold text-center">Formative /50</th>
-                            <th class="px-5 py-4 font-semibold text-center">Summative /50</th>
-                            <th class="px-5 py-4 font-semibold text-center">Total</th>
-                            <th class="px-5 py-4 font-semibold text-center">Decision</th>
+                            <th>Module Code</th>
+                            <th>Module Name</th>
+                            <th class="text-center">Formative /50</th>
+                            <th class="text-center">Summative /50</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">Decision</th>
                         </tr>
-
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
 
                     <?php if ($totalRecords > 0): ?>
 
                         <?php foreach ($marks as $data): ?>
 
-                            <tr class="hover:bg-slate-50 transition">
+                            <tr>
 
-                                <td class="px-5 py-4 font-semibold text-slate-700">
-                                    #<?php echo e($data['Module_Id']); ?>
+                                <td>
+                                    <span class="module-code">
+                                        #<?php echo e($data['Module_Id']); ?>
+                                    </span>
                                 </td>
 
-                                <td class="px-5 py-4">
-                                    <p class="font-semibold text-slate-800">
+                                <td>
+                                    <p class="module-name">
                                         <?php echo e($data['Module_Name']); ?>
                                     </p>
                                 </td>
 
-                                <td class="px-5 py-4 text-center text-slate-600">
-                                    <?php echo e($data['Formative_Assessment']); ?>
+                                <td class="text-center">
+                                    <span class="mark-value">
+                                        <?php echo e($data['Formative_Assessment']); ?>
+                                    </span>
                                 </td>
 
-                                <td class="px-5 py-4 text-center text-slate-600">
-                                    <?php echo e($data['Summative_Assessment']); ?>
+                                <td class="text-center">
+                                    <span class="mark-value">
+                                        <?php echo e($data['Summative_Assessment']); ?>
+                                    </span>
                                 </td>
 
-                                <td class="px-5 py-4 text-center">
-                                    <span class="font-bold text-slate-800">
+                                <td class="text-center">
+                                    <span class="total-value">
                                         <?php echo e($data['Total_Marks']); ?>/100
                                     </span>
                                 </td>
 
-                                <td class="px-5 py-4 text-center">
+                                <td class="text-center">
 
                                     <?php if ((float)$data['Total_Marks'] >= 70): ?>
 
-                                        <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                                        <span class="decision-badge competent">
                                             Competent
                                         </span>
 
                                     <?php else: ?>
 
-                                        <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700">
+                                        <span class="decision-badge not-competent">
                                             Not Competent
                                         </span>
 
@@ -299,28 +677,23 @@ mysqli_stmt_close($stmt);
                     <?php else: ?>
 
                         <tr>
-                            <td colspan="6" class="px-6 py-16 text-center">
+                            <td colspan="6" class="empty-state">
 
-                                <div class="flex flex-col items-center">
-
-                                    <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-
-                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                  stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                        </svg>
-
-                                    </div>
-
-                                    <h3 class="text-base font-semibold text-slate-800 mt-4">
-                                        No assessment results yet
-                                    </h3>
-
-                                    <p class="text-sm text-slate-500 mt-1">
-                                        Your marks will appear here once they have been recorded.
-                                    </p>
-
+                                <div class="empty-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
                                 </div>
+
+                                <h3 class="empty-title">
+                                    No assessment results yet
+                                </h3>
+
+                                <p class="empty-description">
+                                    Your marks will appear here once they have been recorded.
+                                </p>
 
                             </td>
                         </tr>
@@ -333,13 +706,13 @@ mysqli_stmt_close($stmt);
 
             </div>
 
-            <div class="px-5 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:justify-between gap-2">
+            <div class="table-footer">
 
-                <p class="text-xs text-slate-500">
+                <p>
                     Showing <?php echo $totalRecords; ?> assessment records
                 </p>
 
-                <p class="text-xs text-slate-500">
+                <p>
                     GIKONKO TSS · Student Academic Portal
                 </p>
 
@@ -348,7 +721,6 @@ mysqli_stmt_close($stmt);
         </section>
 
     </div>
-
 </main>
 
 <?php include("footer.php"); ?>
