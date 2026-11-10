@@ -18,7 +18,7 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
+   <link href="/Gikonko-Tss-Managment-system/output.css" rel="stylesheet">
     <link rel="icon" href="gikonko.png" type="image/png">
 </head>
 

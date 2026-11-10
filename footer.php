@@ -1,4 +1,13 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footer</title>
+        <link href="output.css" rel="stylesheet">
+</head>
+<body>
+    
 <footer class="mt-12 border-t border-slate-200 bg-white">
 
     <div class="max-w-7xl mx-auto px-5 md:px-8 py-6">
@@ -31,3 +40,5 @@
     </div>
 
 </footer>
+</body>
+</html>
