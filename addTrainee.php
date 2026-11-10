@@ -32,6 +32,8 @@ if (isset($_POST['add'])) {
         $error = "Please complete all required fields.";
     } elseif (!in_array($gender, ["male", "female"], true)) {
         $error = "Please select a valid gender.";
+    } elseif (!ctype_digit((string)$tradeId)) {
+        $error = "Please select a valid trade.";
     } else {
 
         $checkTrade = mysqli_prepare(
@@ -92,172 +94,466 @@ $tradesQuery = mysqli_query(
 
     <title>Add New Trainee | GIKONKO TSS</title>
 
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f8fafc;
+            color: #334155;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 35px 24px 50px;
+        }
+
+        .page-heading {
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .breadcrumb a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            color: #1d4ed8;
+        }
+
+        .breadcrumb span:last-child {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .heading-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .heading-content h1 {
+            color: #0f172a;
+            font-size: 29px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .heading-content p {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 11px 17px;
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .form-container {
+            max-width: 850px;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            overflow: hidden;
+        }
+
+        .form-header {
+            padding: 22px 26px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-header h2 {
+            color: #0f172a;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .form-header p {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 7px;
+        }
+
+        .error-message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 22px 26px 0;
+            padding: 13px 15px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #b91c1c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-icon {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .form-body {
+            padding: 26px;
+        }
+
+        .section-title {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .section-description {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 22px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            width: 100%;
+        }
+
+        .form-group label {
+            display: block;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 9px;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 13px;
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        .form-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 28px 0;
+        }
+
+        .academic-section {
+            margin-bottom: 26px;
+        }
+
+        .information-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 13px;
+            padding: 17px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-top: 28px;
+        }
+
+        .information-icon {
+            width: 21px;
+            height: 21px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .information-box h3 {
+            color: #1e293b;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .information-box p {
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .cancel-button,
+        .submit-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 21px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            text-decoration: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .cancel-button {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .cancel-button:hover {
+            background: #f1f5f9;
+        }
+
+        .submit-button {
+            background: #1d4ed8;
+            border: 1px solid #1d4ed8;
+            color: #ffffff;
+        }
+
+        .submit-button:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        .bottom-note {
+            margin-top: 18px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 650px) {
+            .main-container {
+                padding: 25px 16px 40px;
+            }
+
+            .heading-content {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .heading-content h1 {
+                font-size: 24px;
+            }
+
+            .back-button {
+                width: 100%;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .form-header,
+            .form-body {
+                padding: 20px;
+            }
+
+            .error-message {
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .cancel-button,
+            .submit-button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
+<body>
 
-    <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="max-w-7xl mx-auto px-5 py-8 md:px-8">
+    <main class="main-container">
 
-        <div class="mb-8">
+        <div class="page-heading">
 
-            <div class="flex items-center gap-2 text-sm text-slate-500 mb-3">
-
-                <a href="listOfTrainee.php"
-                   class="hover:text-blue-700 transition">
-                    Trainee Management
-                </a>
-
+            <div class="breadcrumb">
+                <a href="listOfTrainee.php">Trainee Management</a>
                 <span>/</span>
-
-                <span class="text-slate-800 font-medium">
-                    Add Trainee
-                </span>
-
+                <span>Add Trainee</span>
             </div>
 
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="heading-content">
 
                 <div>
-
-                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                        Register New Trainee
-                    </h1>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        Add a new trainee and assign them to an academic trade.
-                    </p>
-
+                    <h1>Register New Trainee</h1>
+                    <p>Add a new trainee and assign them to an academic trade.</p>
                 </div>
 
-                <a href="listOfTrainee.php"
-                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 rounded-md text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 transition">
-
+                <a href="listOfTrainee.php" class="back-button">
                     <span>&larr;</span>
                     Back to Trainees
-
                 </a>
 
             </div>
 
         </div>
 
+        <div class="form-container">
 
-        <div class="max-w-3xl">
+            <div class="form-card">
 
-            <div class="bg-white border border-slate-200 rounded-lg shadow-sm">
-
-                <div class="px-6 py-5 border-b border-slate-200">
-
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Trainee Information
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Complete the personal and academic information below.
-                    </p>
-
+                <div class="form-header">
+                    <h2>Trainee Information</h2>
+                    <p>Complete the personal and academic information below.</p>
                 </div>
-
 
                 <?php if (!empty($error)): ?>
 
-                    <div class="mx-6 mt-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-
-                        <span class="font-bold">!</span>
-
-                        <p class="text-sm font-medium">
-                            <?php echo htmlspecialchars($error); ?>
-                        </p>
-
+                    <div class="error-message">
+                        <span class="error-icon">!</span>
+                        <p><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
                     </div>
 
                 <?php endif; ?>
 
+                <form method="POST" action="" class="form-body">
 
-                <form method="POST" action="" class="p-6 space-y-6">
+                    <section>
 
-                    <div>
+                        <h3 class="section-title">Personal Information</h3>
 
-                        <h3 class="text-sm font-semibold text-slate-900 mb-1">
-                            Personal Information
-                        </h3>
-
-                        <p class="text-xs text-slate-500 mb-5">
+                        <p class="section-description">
                             Enter the trainee's basic personal details.
                         </p>
 
+                        <div class="form-grid">
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="form-group">
 
-                            <div>
-
-                                <label for="Firstname"
-                                       class="block text-sm font-medium text-slate-700 mb-2">
-
-                                    First Name
-                                    <span class="text-red-500">*</span>
-
+                                <label for="Firstname">
+                                    First Name <span class="required">*</span>
                                 </label>
 
                                 <input
                                     type="text"
                                     id="Firstname"
                                     name="Firstname"
-                                    value="<?php echo htmlspecialchars($firstName); ?>"
+                                    value="<?php echo htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8'); ?>"
                                     placeholder="Enter first name"
                                     maxlength="100"
-                                    required
-                                    class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                                    class="form-control"
+                                    required>
 
                             </div>
 
+                            <div class="form-group">
 
-                            <div>
-
-                                <label for="lastname"
-                                       class="block text-sm font-medium text-slate-700 mb-2">
-
-                                    Last Name
-                                    <span class="text-red-500">*</span>
-
+                                <label for="lastname">
+                                    Last Name <span class="required">*</span>
                                 </label>
 
                                 <input
                                     type="text"
                                     id="lastname"
                                     name="lastname"
-                                    value="<?php echo htmlspecialchars($lastName); ?>"
+                                    value="<?php echo htmlspecialchars($lastName, ENT_QUOTES, 'UTF-8'); ?>"
                                     placeholder="Enter last name"
                                     maxlength="100"
-                                    required
-                                    class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                                    class="form-control"
+                                    required>
 
                             </div>
 
                         </div>
 
+                        <div class="form-group" style="margin-top: 20px;">
 
-                        <div class="mt-5">
-
-                            <label for="gender"
-                                   class="block text-sm font-medium text-slate-700 mb-2">
-
-                                Gender
-                                <span class="text-red-500">*</span>
-
+                            <label for="gender">
+                                Gender <span class="required">*</span>
                             </label>
 
                             <select
                                 id="gender"
                                 name="gender"
-                                required
-                                class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                                class="form-control"
+                                required>
 
                                 <option value="">Select gender</option>
 
@@ -275,96 +571,77 @@ $tradesQuery = mysqli_query(
 
                         </div>
 
-                    </div>
+                    </section>
 
+                    <div class="form-divider"></div>
 
-                    <div class="border-t border-slate-100"></div>
+                    <section class="academic-section">
 
+                        <h3 class="section-title">Academic Information</h3>
 
-                    <div>
-
-                        <h3 class="text-sm font-semibold text-slate-900 mb-1">
-                            Academic Information
-                        </h3>
-
-                        <p class="text-xs text-slate-500 mb-5">
+                        <p class="section-description">
                             Assign the trainee to the appropriate academic trade.
                         </p>
 
+                        <div class="form-group">
 
-                        <label for="Trade_id"
-                               class="block text-sm font-medium text-slate-700 mb-2">
+                            <label for="Trade_id">
+                                Select Trade <span class="required">*</span>
+                            </label>
 
-                            Select Trade
-                            <span class="text-red-500">*</span>
+                            <select
+                                id="Trade_id"
+                                name="Trade_id"
+                                class="form-control"
+                                required>
 
-                        </label>
+                                <option value="">Select a trade</option>
 
-                        <select
-                            id="Trade_id"
-                            name="Trade_id"
-                            required
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                                <?php if ($tradesQuery): ?>
 
-                            <option value="">Select a trade</option>
+                                    <?php while ($data = mysqli_fetch_assoc($tradesQuery)): ?>
 
-                            <?php while ($data = mysqli_fetch_assoc($tradesQuery)): ?>
+                                        <option
+                                            value="<?php echo htmlspecialchars($data['Trade_Id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                            <?php echo ($tradeId == $data['Trade_Id']) ? "selected" : ""; ?>>
 
-                                <option
-                                    value="<?php echo htmlspecialchars($data['Trade_Id']); ?>"
-                                    <?php echo ($tradeId == $data['Trade_Id']) ? "selected" : ""; ?>>
+                                            <?php echo htmlspecialchars($data['Trade_name'], ENT_QUOTES, 'UTF-8'); ?>
 
-                                    <?php echo htmlspecialchars($data['Trade_name']); ?>
+                                        </option>
 
-                                </option>
+                                    <?php endwhile; ?>
 
-                            <?php endwhile; ?>
+                                <?php endif; ?>
 
-                        </select>
+                            </select>
 
-                    </div>
+                        </div>
 
+                    </section>
 
-                    <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+                    <div class="information-box">
 
-                        <div class="flex items-start gap-3">
+                        <div class="information-icon">i</div>
 
-                            <span class="text-blue-700 font-semibold">i</span>
+                        <div>
+                            <h3>Registration Information</h3>
 
-                            <div>
-
-                                <h3 class="text-sm font-semibold text-slate-800">
-                                    Registration Information
-                                </h3>
-
-                                <p class="text-xs text-slate-500 mt-1">
-                                    The trainee code will be managed by your system
-                                    according to your database configuration.
-                                </p>
-
-                            </div>
-
+                            <p>
+                                The trainee code will be managed by your system
+                                according to your database configuration.
+                            </p>
                         </div>
 
                     </div>
 
+                    <div class="form-actions">
 
-                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
-
-                        <a href="listOfTrainee.php"
-                           class="px-5 py-2.5 border border-slate-300 rounded-md text-sm font-semibold text-slate-700 text-center hover:bg-slate-100 transition">
-
+                        <a href="listOfTrainee.php" class="cancel-button">
                             Cancel
-
                         </a>
 
-                        <button
-                            type="submit"
-                            name="add"
-                            class="px-6 py-2.5 bg-blue-700 text-white rounded-md text-sm font-semibold hover:bg-blue-800 focus:ring-4 focus:ring-blue-100 transition">
-
+                        <button type="submit" name="add" class="submit-button">
                             Register Trainee
-
                         </button>
 
                     </div>
@@ -373,10 +650,9 @@ $tradesQuery = mysqli_query(
 
             </div>
 
-
-            <div class="mt-5 text-sm text-slate-500">
+            <p class="bottom-note">
                 Ensure the trainee's personal details and academic trade are correct before registration.
-            </div>
+            </p>
 
         </div>
 

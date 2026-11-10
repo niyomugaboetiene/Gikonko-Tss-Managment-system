@@ -77,225 +77,475 @@ if (isset($_POST['add_user'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Add User | GIKONKO TSS</title>
-
-    <link href="output.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.5;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 35px 24px 55px;
+        }
+
+        .page-heading {
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .breadcrumb a {
+            color: #64748b;
+        }
+
+        .breadcrumb a:hover {
+            color: #1d4ed8;
+        }
+
+        .breadcrumb span:last-child {
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .heading-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .heading-content h1 {
+            color: #0f172a;
+            font-size: 29px;
+            font-weight: 700;
+            letter-spacing: -0.6px;
+        }
+
+        .heading-content p {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 7px;
+        }
+
+        .form-wrapper {
+            max-width: 800px;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 22px 25px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-header h2 {
+            color: #0f172a;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .card-header p {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .form-content {
+            padding: 25px;
+        }
+
+        .message {
+            margin: 20px 25px 0;
+            padding: 12px 15px;
+            border-radius: 6px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .success-message {
+            color: #166534;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .error-message {
+            color: #b91c1c;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .section-heading {
+            margin-bottom: 20px;
+        }
+
+        .section-heading h3 {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .section-heading p {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 43px;
+            padding: 10px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #334155;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper .form-control {
+            padding-right: 75px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .toggle-password:hover {
+            color: #1e40af;
+        }
+
+        .help-text {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 7px;
+        }
+
+        .form-divider {
+            border: none;
+            border-top: 1px solid #f1f5f9;
+            margin: 25px 0;
+        }
+
+        .information-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 25px;
+        }
+
+        .information-icon {
+            width: 21px;
+            height: 21px;
+            min-width: 21px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1d4ed8;
+            background: #dbeafe;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .information-box h3 {
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .information-box p {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 4px;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            min-height: 41px;
+            padding: 10px 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-clear {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-clear:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-primary {
+            background: #1d4ed8;
+            color: #ffffff;
+            border: 1px solid #1d4ed8;
+        }
+
+        .btn-primary:hover {
+            background: #1e40af;
+            border-color: #1e40af;
+        }
+
+        .bottom-note {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .page-container {
+                padding: 25px 15px 40px;
+            }
+
+            .heading-content {
+                align-items: flex-start;
+            }
+
+            .heading-content h1 {
+                font-size: 24px;
+            }
+
+            .card-header,
+            .form-content {
+                padding: 19px;
+            }
+
+            .message {
+                margin-left: 19px;
+                margin-right: 19px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
+<body>
 
-    <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="max-w-7xl mx-auto px-5 py-8 md:px-8">
+    <main class="page-container">
 
-        <div class="mb-8">
+        <div class="page-heading">
 
-            <div class="flex items-center gap-2 text-sm text-slate-500 mb-3">
-
+            <div class="breadcrumb">
                 <span>User Management</span>
-
                 <span>/</span>
-
-                <span class="text-slate-800 font-medium">
-                    Add User
-                </span>
-
+                <span>Add User</span>
             </div>
 
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
+            <div class="heading-content">
                 <div>
-
-                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                        Add New User
-                    </h1>
-
-                    <p class="text-sm text-slate-500 mt-2">
-                        Create a new account to access the management system.
-                    </p>
-
+                    <h1>Add New User</h1>
+                    <p>Create a new account to access the management system.</p>
                 </div>
-
             </div>
 
         </div>
 
+        <div class="form-wrapper">
 
-        <div class="max-w-3xl">
+            <div class="form-card">
 
-            <div class="bg-white border border-slate-200 rounded-lg shadow-sm">
-
-                <div class="px-6 py-5 border-b border-slate-200">
-
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Account Information
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Enter the username and password for the new account.
-                    </p>
-
+                <div class="card-header">
+                    <h2>Account Information</h2>
+                    <p>Enter the username and password for the new account.</p>
                 </div>
 
-
                 <?php if (!empty($success)): ?>
-
-                    <div class="mx-6 mt-5 flex items-start gap-3 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-
-                        <span class="font-bold">✓</span>
-
-                        <p class="text-sm font-medium">
-                            <?php echo htmlspecialchars($success); ?>
-                        </p>
-
+                    <div class="message success-message">
+                        <span>✓</span>
+                        <p><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></p>
                     </div>
-
                 <?php endif; ?>
-
 
                 <?php if (!empty($error)): ?>
-
-                    <div class="mx-6 mt-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-
-                        <span class="font-bold">!</span>
-
-                        <p class="text-sm font-medium">
-                            <?php echo htmlspecialchars($error); ?>
-                        </p>
-
+                    <div class="message error-message">
+                        <span>!</span>
+                        <p><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
                     </div>
-
                 <?php endif; ?>
 
+                <form method="POST" action="" class="form-content">
 
-                <form method="POST" action="" class="p-6 space-y-6">
+                    <div class="section-heading">
+                        <h3>Login Credentials</h3>
+                        <p>Set up the credentials that will be used to log in.</p>
+                    </div>
 
-                    <div>
+                    <div class="form-group">
+                        <label for="username">
+                            Username <span class="required">*</span>
+                        </label>
 
-                        <h3 class="text-sm font-semibold text-slate-900 mb-1">
-                            Login Credentials
-                        </h3>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            value="<?php echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8'); ?>"
+                            placeholder="Enter username"
+                            maxlength="100"
+                            autocomplete="username"
+                            required
+                            class="form-control">
+                    </div>
 
-                        <p class="text-xs text-slate-500 mb-5">
-                            Set up the credentials that will be used to log in.
-                        </p>
+                    <div class="form-group">
+                        <label for="password">
+                            Password <span class="required">*</span>
+                        </label>
 
-
-                        <div class="mb-5">
-
-                            <label for="username"
-                                   class="block text-sm font-medium text-slate-700 mb-2">
-
-                                Username
-                                <span class="text-red-500">*</span>
-
-                            </label>
-
+                        <div class="password-wrapper">
                             <input
-                                type="text"
-                                id="username"
-                                name="username"
-                                value="<?php echo htmlspecialchars($username); ?>"
-                                placeholder="Enter username"
-                                maxlength="100"
-                                autocomplete="username"
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Create a secure password"
+                                minlength="8"
+                                autocomplete="new-password"
                                 required
-                                class="w-full px-3 py-2.5 border border-slate-300 rounded-md bg-white text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                                class="form-control">
 
+                            <button
+                                type="button"
+                                id="togglePassword"
+                                class="toggle-password">
+                                Show
+                            </button>
                         </div>
 
+                        <p class="help-text">
+                            Use at least 8 characters for your password.
+                        </p>
+                    </div>
+
+                    <hr class="form-divider">
+
+                    <div class="information-box">
+                        <span class="information-icon">i</span>
 
                         <div>
-
-                            <label for="password"
-                                   class="block text-sm font-medium text-slate-700 mb-2">
-
-                                Password
-                                <span class="text-red-500">*</span>
-
-                            </label>
-
-                            <div class="relative">
-
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    placeholder="Create a secure password"
-                                    minlength="8"
-                                    autocomplete="new-password"
-                                    required
-                                    class="w-full px-3 py-2.5 pr-20 border border-slate-300 rounded-md bg-white text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
-
-                                <button
-                                    type="button"
-                                    id="togglePassword"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-blue-700 hover:text-blue-900">
-
-                                    Show
-
-                                </button>
-
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-2">
-                                Use at least 8 characters for your password.
+                            <h3>Account Security</h3>
+                            <p>
+                                Passwords are securely hashed before being
+                                stored in the database. Never share account
+                                credentials with unauthorized people.
                             </p>
-
                         </div>
-
                     </div>
 
+                    <div class="form-actions">
 
-                    <div class="border-t border-slate-100"></div>
-
-
-                    <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
-
-                        <div class="flex items-start gap-3">
-
-                            <span class="text-blue-700 font-semibold">i</span>
-
-                            <div>
-
-                                <h3 class="text-sm font-semibold text-slate-800">
-                                    Account Security
-                                </h3>
-
-                                <p class="text-xs text-slate-500 mt-1">
-                                    Passwords are securely hashed before being
-                                    stored in the database. Never share account
-                                    credentials with unauthorized people.
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
-
-                        <button
-                            type="reset"
-                            class="px-5 py-2.5 border border-slate-300 rounded-md text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
-
+                        <button type="reset" class="btn btn-clear">
                             Clear
-
                         </button>
 
                         <button
                             type="submit"
                             name="add_user"
-                            class="px-6 py-2.5 bg-blue-700 text-white rounded-md text-sm font-semibold hover:bg-blue-800 focus:ring-4 focus:ring-blue-100 transition">
-
+                            class="btn btn-primary">
                             Create Account
-
                         </button>
 
                     </div>
@@ -304,8 +554,7 @@ if (isset($_POST['add_user'])) {
 
             </div>
 
-
-            <div class="mt-5 text-sm text-slate-500">
+            <div class="bottom-note">
                 Only authorized personnel should create and manage system accounts.
             </div>
 
@@ -316,27 +565,18 @@ if (isset($_POST['add_user'])) {
     <?php include("footer.php"); ?>
 
     <script>
-
         const passwordInput = document.getElementById("password");
-
         const togglePassword = document.getElementById("togglePassword");
 
         togglePassword.addEventListener("click", function () {
-
             if (passwordInput.type === "password") {
-
                 passwordInput.type = "text";
                 togglePassword.textContent = "Hide";
-
             } else {
-
                 passwordInput.type = "password";
                 togglePassword.textContent = "Show";
-
             }
-
         });
-
     </script>
 
 </body>
