@@ -1,6 +1,8 @@
 
 <?php
+
 include("conn.php");
+
 session_start();
 
 if (!isset($_SESSION['username'])) {
@@ -27,6 +29,7 @@ $sql = "SELECT
 $query = mysqli_query($conn, $sql);
 
 if (!$query) {
+    error_log("Not competent trainees query failed: " . mysqli_error($conn));
     die("Unable to retrieve trainee records.");
 }
 
@@ -35,157 +38,588 @@ $totalRecords = mysqli_num_rows($query);
 function escapeOutput($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Not Yet Competent Trainees | GIKONKO TSS</title>
-    <link href="output.css" rel="stylesheet">
+
     <link rel="icon" type="image/png" href="gikonko.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        header {
+            width: 100%;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 36px 24px;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .heading-label {
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 9px;
+        }
+
+        .page-heading h1 {
+            font-size: 28px;
+            font-weight: 750;
+            letter-spacing: -0.7px;
+            color: #172554;
+        }
+
+        .page-description {
+            margin-top: 9px;
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 11px 16px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 26px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+        }
+
+        .stat-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .stat-number {
+            margin-top: 10px;
+            font-size: 31px;
+            font-weight: 750;
+            letter-spacing: -0.8px;
+            color: #172554;
+        }
+
+        .stat-number.danger {
+            color: #dc2626;
+        }
+
+        .stat-icon {
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            flex-shrink: 0;
+        }
+
+        .stat-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .danger-icon {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .blue-icon {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .records-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+        }
+
+        .records-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .records-header h2 {
+            color: #172554;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .records-header p {
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 11px 16px;
+            background: #1d4ed8;
+            color: #ffffff;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .download-btn:hover {
+            background: #1e40af;
+        }
+
+        .download-btn svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 900px;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        thead {
+            background: #f8fafc;
+        }
+
+        th {
+            padding: 16px 20px;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 16px 20px;
+            color: #475569;
+            font-size: 13px;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .trainee-code {
+            color: #334155;
+            font-weight: 650;
+        }
+
+        .trainee-name {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .marks-value {
+            text-align: center;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .decision-cell {
+            text-align: center;
+        }
+
+        .decision-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            padding: 55px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0fdf4;
+            color: #16a34a;
+            border-radius: 50%;
+        }
+
+        .empty-icon svg {
+            width: 25px;
+            height: 25px;
+        }
+
+        .empty-state h3 {
+            color: #1e293b;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .empty-state p {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .records-footer {
+            padding: 15px 22px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .records-footer p {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 28px 18px;
+            }
+
+            .page-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .page-heading h1 {
+                font-size: 24px;
+            }
+
+            .records-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .download-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 520px) {
+            main {
+                padding: 23px 13px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 13px;
+            }
+
+            .stat-card {
+                padding: 18px;
+            }
+
+            .records-header {
+                padding: 18px;
+            }
+
+            .stat-number {
+                font-size: 27px;
+            }
+
+            .back-btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body>
 
-    <header class="w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+    <header>
         <?php include("Dashboard.php"); ?>
     </header>
 
-    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main>
 
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div class="page-heading">
+
             <div>
-                <p class="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+                <p class="heading-label">
                     Academic Performance
                 </p>
-                <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">
-                    Not Yet Competent Trainees
-                </h1>
-                <p class="text-sm text-slate-500 mt-2">
+
+                <h1>Not Yet Competent Trainees</h1>
+
+                <p class="page-description">
                     Assessment records for trainees who scored below 70 marks.
                 </p>
             </div>
 
-            <a href="greetingUser.php"
-               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 font-medium rounded-md hover:bg-slate-100 transition">
+            <a href="greetingUser.php" class="back-btn">
                 <span>&larr;</span>
                 Back to Dashboard
             </a>
+
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <section class="stats-grid">
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <div class="flex items-center justify-between">
+            <div class="stat-card">
+
+                <div class="stat-content">
+
                     <div>
-                        <p class="text-sm font-medium text-slate-500">
+                        <p class="stat-label">
                             Not Competent Records
                         </p>
-                        <p class="text-3xl font-bold text-red-600 mt-2">
+
+                        <p class="stat-number danger">
                             <?php echo $totalRecords; ?>
                         </p>
                     </div>
 
-                    <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-red-50 text-red-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>
+                    <div class="stat-icon danger-icon">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="1.8"
+                                d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"
+                            />
                         </svg>
                     </div>
+
                 </div>
+
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <div class="flex items-center justify-between">
+            <div class="stat-card">
+
+                <div class="stat-content">
+
                     <div>
-                        <p class="text-sm font-medium text-slate-500">
+                        <p class="stat-label">
                             Required Competency Mark
                         </p>
-                        <p class="text-3xl font-bold text-slate-800 mt-2">
+
+                        <p class="stat-number">
                             70%
                         </p>
                     </div>
 
-                    <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <div class="stat-icon blue-icon">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="1.8"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
                         </svg>
                     </div>
+
                 </div>
+
             </div>
 
-        </div>
+        </section>
 
-        <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <section class="records-card">
 
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 border-b border-slate-200">
+            <div class="records-header">
+
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-800">
-                        Trainee Assessment Records
-                    </h2>
-                    <p class="text-sm text-slate-500 mt-1">
+                    <h2>Trainee Assessment Records</h2>
+
+                    <p>
                         Review and download the assessment results.
                     </p>
                 </div>
 
-                <a href="download_not_competent.php"
-                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-700 text-white text-sm font-semibold rounded-md hover:bg-blue-800 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+                <a href="download_not_competent.php" class="download-btn">
+
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+                        />
                     </svg>
+
                     Download CSV
+
                 </a>
+
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <div class="table-container">
 
-                    <thead class="bg-slate-50">
+                <table>
+
+                    <thead>
                         <tr>
-                            <th class="px-5 py-4 text-left font-semibold text-slate-600 whitespace-nowrap">Trainee Code</th>
-                            <th class="px-5 py-4 text-left font-semibold text-slate-600 whitespace-nowrap">Trainee Name</th>
-                            <th class="px-5 py-4 text-left font-semibold text-slate-600 whitespace-nowrap">Module Code</th>
-                            <th class="px-5 py-4 text-left font-semibold text-slate-600 whitespace-nowrap">Module Name</th>
-                            <th class="px-5 py-4 text-left font-semibold text-slate-600 whitespace-nowrap">Trade Name</th>
-                            <th class="px-5 py-4 text-center font-semibold text-slate-600 whitespace-nowrap">Total Marks</th>
-                            <th class="px-5 py-4 text-center font-semibold text-slate-600 whitespace-nowrap">Decision</th>
+                            <th>Trainee Code</th>
+                            <th>Trainee Name</th>
+                            <th>Module Code</th>
+                            <th>Module Name</th>
+                            <th>Trade Name</th>
+                            <th style="text-align: center;">Total Marks</th>
+                            <th style="text-align: center;">Decision</th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
 
                         <?php if ($totalRecords > 0): ?>
 
                             <?php while ($data = mysqli_fetch_assoc($query)): ?>
 
-                                <tr class="hover:bg-slate-50 transition">
+                                <tr>
 
-                                    <td class="px-5 py-4 font-medium text-slate-700 whitespace-nowrap">
+                                    <td class="trainee-code">
                                         <?php echo escapeOutput($data['Trainee_Id']); ?>
                                     </td>
 
-                                    <td class="px-5 py-4 text-slate-800 whitespace-nowrap">
+                                    <td class="trainee-name">
                                         <?php echo escapeOutput($data['Trainee_Name']); ?>
                                     </td>
 
-                                    <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+                                    <td>
                                         <?php echo escapeOutput($data['Module_Id']); ?>
                                     </td>
 
-                                    <td class="px-5 py-4 text-slate-700 whitespace-nowrap">
+                                    <td>
                                         <?php echo escapeOutput($data['Module_Name']); ?>
                                     </td>
 
-                                    <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+                                    <td>
                                         <?php echo escapeOutput($data['Trade_name']); ?>
                                     </td>
 
-                                    <td class="px-5 py-4 text-center font-semibold text-slate-800">
+                                    <td class="marks-value">
                                         <?php echo escapeOutput($data['Total_Marks']); ?>/100
                                     </td>
 
-                                    <td class="px-5 py-4 text-center whitespace-nowrap">
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-100">
+                                    <td class="decision-cell">
+                                        <span class="decision-badge">
                                             <?php echo escapeOutput($data['Decision']); ?>
                                         </span>
                                     </td>
@@ -197,33 +631,47 @@ function escapeOutput($value) {
                         <?php else: ?>
 
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-3">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                <td colspan="7">
+
+                                    <div class="empty-state">
+
+                                        <div class="empty-icon">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M5 13l4 4L19 7"
+                                                />
                                             </svg>
                                         </div>
 
-                                        <p class="text-slate-800 font-semibold">
-                                            No records found
-                                        </p>
+                                        <h3>No records found</h3>
 
-                                        <p class="text-sm text-slate-500 mt-1">
+                                        <p>
                                             There are currently no trainees below the competency threshold.
                                         </p>
+
                                     </div>
+
                                 </td>
                             </tr>
 
                         <?php endif; ?>
 
                     </tbody>
+
                 </table>
+
             </div>
 
-            <div class="px-5 py-4 bg-slate-50 border-t border-slate-200">
-                <p class="text-xs text-slate-500">
+            <div class="records-footer">
+                <p>
                     Showing <?php echo $totalRecords; ?> assessment record(s).
                 </p>
             </div>
