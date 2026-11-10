@@ -1,5 +1,6 @@
 
 <?php
+
 include("conn.php");
 session_start();
 
@@ -17,6 +18,7 @@ header("Pragma: no-cache");
 
 $username = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
 $initial = strtoupper(substr($_SESSION['username'], 0, 1));
+
 ?>
 
 <!DOCTYPE html>
@@ -25,7 +27,7 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Student Dashboard | GIKONKO TSS</title>
+    <title>DOS Dashboard | GIKONKO TSS</title>
     <link rel="icon" type="image/png" href="gikonko.png">
 
     <style>
@@ -48,10 +50,10 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             text-decoration: none;
         }
 
-        .student-main {
+        .admin-main {
             flex: 1;
             width: 100%;
-            padding: 115px 24px 45px;
+            padding: 45px 24px;
         }
 
         .dashboard-container {
@@ -59,6 +61,8 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             max-width: 1280px;
             margin: 0 auto;
         }
+
+        /* Welcome section */
 
         .welcome-section {
             margin-bottom: 30px;
@@ -77,11 +81,17 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             margin-top: 9px;
         }
 
+        .welcome-section h1 span {
+            color: #1d4ed8;
+        }
+
         .welcome-section p:last-child {
             color: #64748b;
             font-size: 14px;
             margin-top: 9px;
         }
+
+        /* Hero section */
 
         .hero-card {
             background: #ffffff;
@@ -173,6 +183,8 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         .btn-secondary:hover {
             background: #f8fafc;
         }
+
+        /* Administrator account card */
 
         .hero-side {
             background: #f1f5f9;
@@ -291,6 +303,8 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             font-size: 11px;
         }
 
+        /* Quick access */
+
         .quick-access {
             margin-top: 35px;
         }
@@ -359,6 +373,16 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             background: #faf5ff;
         }
 
+        .quick-icon.green {
+            color: #15803d;
+            background: #f0fdf4;
+        }
+
+        .quick-icon.orange {
+            color: #c2410c;
+            background: #fff7ed;
+        }
+
         .quick-icon.red {
             color: #dc2626;
             background: #fef2f2;
@@ -398,6 +422,8 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         .logout-card .quick-link {
             color: #dc2626;
         }
+
+        /* Information message */
 
         .message-card {
             margin-top: 30px;
@@ -439,8 +465,8 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         }
 
         @media (max-width: 600px) {
-            .student-main {
-                padding: 100px 15px 35px;
+            .admin-main {
+                padding: 30px 15px 35px;
             }
 
             .welcome-section h1 {
@@ -489,7 +515,7 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         <?php include("DashboardStudent.php"); ?>
     </header>
 
-    <main class="student-main">
+    <main class="admin-main">
 
         <div class="dashboard-container">
 
@@ -500,11 +526,11 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                 </p>
 
                 <h1>
-                    Welcome back, <?php echo $username; ?>!
+                    Welcome back, <span><?php echo $username; ?></span>!
                 </h1>
 
                 <p>
-                    Welcome to your GIKONKO TSS student portal.
+                    Director of Studies (DOS) Administration Portal.
                 </p>
 
             </div>
@@ -514,29 +540,32 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                 <div class="hero-grid">
 
                     <div class="hero-content">
+
+                        <p class="hero-label">DOS Administration</p>
+
                         <h2>
-                            Your education journey starts here.
+                            Manage academics. Empower every trainee.
                         </h2>
 
                         <p class="hero-description">
-                            Access your academic information, follow your assessment
-                            progress, and stay connected with your training journey
-                            at GIKONKO Technical Secondary School.
+                            Welcome to the GIKONKO TSS Director of Studies
+                            dashboard. Manage trainee records, organize
+                            academic modules, monitor assessment results,
+                            and oversee the academic progress of trainees.
                         </p>
 
                         <div class="hero-actions">
 
-                            <a href="listOfMarks.php" class="btn btn-primary">
-                                View Marks
-
+                            <a href="greetingUser.php" class="btn btn-primary">
+                                Administration Dashboard
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </a>
 
-                            <a href="studentProfile.php" class="btn btn-secondary">
-                                My Profile
+                            <a href="listOfMarks.php" class="btn btn-secondary">
+                                Manage Marks
                             </a>
 
                         </div>
@@ -551,7 +580,7 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
                                 <div>
                                     <p class="account-label">
-                                        Student account
+                                        Administrator Account
                                     </p>
 
                                     <h3 class="account-name">
@@ -578,7 +607,7 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
                                     <div>
                                         <h4>Account Active</h4>
-                                        <p>Welcome to your student portal</p>
+                                        <p>Administrator access verified</p>
                                     </div>
 
                                 </div>
@@ -594,8 +623,8 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                                     </div>
 
                                     <div>
-                                        <h4>Academic Progress</h4>
-                                        <p>Keep working towards your goals</p>
+                                        <h4>Academic Administration</h4>
+                                        <p>Director of Studies Portal</p>
                                     </div>
 
                                 </div>
@@ -604,7 +633,7 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
                             <div class="account-footer">
                                 <p>
-                                    GIKONKO TSS · Student Management System
+                                    GIKONKO TSS · DOS Management System
                                 </p>
                             </div>
 
@@ -619,18 +648,42 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             <section class="quick-access">
 
                 <div class="section-heading">
-                    <h2>Quick Access</h2>
+
+                    <h2>Administrative Quick Access</h2>
 
                     <p>
-                        Navigate to your student services.
+                        Manage and monitor the main academic activities.
                     </p>
+
                 </div>
 
                 <div class="quick-grid">
 
-                    <a href="studentMarks.php" class="quick-card">
+                    <a href="listOfTrainee.php" class="quick-card">
 
                         <div class="quick-icon blue">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H2v-2a4 4 0 014-4h3m8-7a4 4 0 11-8 0 4 4 0 018 0zM16 3.13a4 4 0 010 7.75"/>
+                            </svg>
+                        </div>
+
+                        <h3>Trainee Management</h3>
+
+                        <p>
+                            View, register, update and manage trainee records.
+                        </p>
+
+                        <span class="quick-link">
+                            Manage trainees →
+                        </span>
+
+                    </a>
+
+                    <a href="listOfMarks.php" class="quick-card">
+
+                        <div class="quick-icon purple">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     stroke-width="2"
@@ -638,44 +691,87 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                             </svg>
                         </div>
 
-                        <h3>My Academic Marks</h3>
+                        <h3>Assessment Management</h3>
 
                         <p>
-                            View your assessment results and academic performance.
+                            Add, review and update trainee assessment marks.
                         </p>
 
                         <span class="quick-link">
-                            View results &rarr;
+                            Manage assessments →
                         </span>
 
                     </a>
 
-                    <a href="studentProfile.php" class="quick-card">
+                    <a href="listOfModule.php" class="quick-card">
 
-                        <div class="quick-icon purple">
+                        <div class="quick-icon green">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"/>
                             </svg>
                         </div>
 
-                        <h3>My Profile</h3>
+                        <h3>Module Management</h3>
 
                         <p>
-                            Access your personal student account information.
+                            Organize training modules and their assigned trades.
                         </p>
 
                         <span class="quick-link">
-                            View profile &rarr;
+                            Manage modules →
                         </span>
 
                     </a>
 
-                    <a
-                        href="logoutStudent.php"
-                        onclick="return confirm('Are you sure you want to logout?')"
-                        class="quick-card logout-card">
+                    <a href="listOfTrades.php" class="quick-card">
+
+                        <div class="quick-icon orange">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/>
+                            </svg>
+                        </div>
+
+                        <h3>Trade Management</h3>
+
+                        <p>
+                            Manage training trades and their academic categories.
+                        </p>
+
+                        <span class="quick-link">
+                            Manage trades →
+                        </span>
+
+                    </a>
+
+                    <a href="greetingUser.php" class="quick-card">
+
+                        <div class="quick-icon blue">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>
+                            </svg>
+                        </div>
+
+                        <h3>Academic Overview</h3>
+
+                        <p>
+                            Access the main administration dashboard and academic tools.
+                        </p>
+
+                        <span class="quick-link">
+                            View overview →
+                        </span>
+
+                    </a>
+
+                    <a href="logoutStudent.php"
+                       onclick="return confirm('Are you sure you want to logout?')"
+                       class="quick-card logout-card">
 
                         <div class="quick-icon red">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -688,11 +784,11 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         <h3>Logout</h3>
 
                         <p>
-                            Securely sign out of your student account.
+                            Securely sign out of the DOS administrator account.
                         </p>
 
                         <span class="quick-link">
-                            Sign out &rarr;
+                            Sign out →
                         </span>
 
                     </a>
@@ -703,12 +799,13 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
             <div class="message-card">
 
-                <h3>A message for every trainee</h3>
+                <h3>Director of Studies Responsibilities</h3>
 
                 <p>
-                    Success comes through consistency, discipline, and hard work.
-                    Stay focused on your studies and continue building the skills
-                    that will shape your future.
+                    Ensure accurate academic records, monitor trainee
+                    performance, coordinate training modules, and support
+                    quality education at GIKONKO Technical Secondary School.
+                    Your leadership helps every trainee achieve academic success.
                 </p>
 
             </div>
