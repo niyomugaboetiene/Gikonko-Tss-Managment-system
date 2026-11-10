@@ -160,8 +160,8 @@ $modulesQuery = mysqli_query(
 
     <title>Add Marks | GIKONKO TSS</title>
 
-    <link href="output.css" rel="stylesheet">
-    <link rel="icon" type="image/png" href="gikonko.png">
+<link href="output.css" rel="stylesheet">
+ <link rel="icon" type="image/png" href="gikonko.png">
 </head>
 
 <body class="min-h-screen bg-slate-50 text-slate-800">
