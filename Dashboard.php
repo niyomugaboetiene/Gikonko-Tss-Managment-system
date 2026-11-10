@@ -35,206 +35,686 @@ $flashMessages = [
 foreach (['success', 'error', 'login_error'] as $key) {
     unset($_SESSION[$key]);
 }
-?>
 
+$displayName = htmlspecialchars($username, ENT_QUOTES, 'UTF-8');
+$displayRole = htmlspecialchars($role, ENT_QUOTES, 'UTF-8');
+$avatarLetter = strtoupper(substr((string)$username, 0, 1));
+?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gikonko Tss Management System Dashboard</title>
-    <link href="output.css" rel="stylesheet">
+    <title>GIKONKO TSS Management System</title>
+    <link rel="icon" href="gikonko.png" type="image/png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        .dashboard-header {
+            width: 100%;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            position: relative;
+            z-index: 100;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .navbar {
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 7px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .brand-info h1 {
+            font-size: 19px;
+            font-weight: 750;
+            color: #0f172a;
+            letter-spacing: -0.4px;
+        }
+
+        .brand-info p {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .desktop-navigation {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-link {
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            transition: background 0.2s, color 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .nav-link.active {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .account-area {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .account-info {
+            text-align: right;
+        }
+
+        .account-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .account-role {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .profile-wrapper {
+            position: relative;
+        }
+
+        .profile-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #1d4ed8;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .profile-button:hover {
+            background: #1e40af;
+        }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            top: 49px;
+            right: 0;
+            width: 210px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+            overflow: hidden;
+            z-index: 200;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-user {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dropdown-user strong {
+            display: block;
+            font-size: 13px;
+            color: #1e293b;
+        }
+
+        .dropdown-user span {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .logout-link {
+            display: block;
+            padding: 12px 15px;
+            color: #dc2626;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .logout-link:hover {
+            background: #fef2f2;
+        }
+
+        .mobile-menu-button {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #475569;
+            font-size: 23px;
+            cursor: pointer;
+        }
+
+        .mobile-navigation {
+            display: none;
+            padding: 15px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .mobile-navigation.show {
+            display: block;
+        }
+
+        .mobile-nav-links {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 12px;
+            background: #f8fafc;
+        }
+
+        .mobile-nav-links .nav-link.active {
+            background: #eff6ff;
+        }
+
+        .mobile-account {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 16px;
+            padding-top: 15px;
+        }
+
+        .mobile-account-info strong {
+            display: block;
+            font-size: 13px;
+            color: #1e293b;
+        }
+
+        .mobile-account-info span {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .mobile-logout {
+            padding: 9px 15px;
+            border-radius: 6px;
+            background: #fef2f2;
+            color: #dc2626;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .dashboard-main {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 30px 24px 20px;
+        }
+
+        .welcome-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 0;
+            margin-bottom: 10px;
+        }
+
+        .welcome-date {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .welcome-title {
+            font-size: 25px;
+            font-weight: 750;
+            color: #0f172a;
+            margin-top: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome-description {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        .system-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 14px;
+            background: #f0fdf4;
+            border: 1px solid #dcfce7;
+            border-radius: 6px;
+            color: #15803d;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .flash-container {
+            margin-bottom: 12px;
+        }
+
+        .flash-message {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .flash-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .flash-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .flash-close {
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-size: 21px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1100px) {
+            .desktop-navigation {
+                gap: 0;
+            }
+
+            .nav-link {
+                padding: 9px 8px;
+                font-size: 12px;
+            }
+
+            .brand-info h1 {
+                font-size: 17px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .desktop-navigation,
+            .desktop-account {
+                display: none;
+            }
+
+            .mobile-menu-button {
+                display: block;
+            }
+
+            .navbar {
+                min-height: 70px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .dashboard-container {
+                padding: 0 16px;
+            }
+
+            .dashboard-main {
+                padding: 20px 16px;
+            }
+
+            .brand-logo {
+                width: 39px;
+                height: 39px;
+            }
+
+            .brand-info h1 {
+                font-size: 16px;
+            }
+
+            .brand-info p {
+                font-size: 10px;
+            }
+
+            .welcome-section {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 15px 0;
+            }
+
+            .welcome-title {
+                font-size: 22px;
+            }
+
+            .welcome-description {
+                font-size: 13px;
+            }
+
+            .system-status {
+                align-self: flex-start;
+            }
+
+            .mobile-nav-links {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+    </style>
 </head>
+
 <body>
-    <div class="w-full bg-white border-b border-slate-200 shadow-sm"
-     x-data="{ open: false, profileOpen: false }">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<header class="dashboard-header">
 
-        <div class="h-16 flex items-center justify-between gap-4">
+    <div class="dashboard-container">
 
-            <a href="greetingUser.php" class="flex items-center gap-3 shrink-0">
-                <img src="gikonko.png"
-                     alt="GIKONKO TSS Logo"
-                     class="w-10 h-10 object-cover rounded-md">
+        <div class="navbar">
 
-                <div>
-                    <h1 class="text-lg font-bold text-slate-800 leading-tight">
-                        GIKONKO TSS
-                    </h1>
-                    <p class="text-xs text-slate-500">
-                        Student Management System
-                    </p>
+            <a href="greetingUser.php" class="brand">
+
+                <img src="gikonko.png" alt="GIKONKO TSS Logo" class="brand-logo">
+
+                <div class="brand-info">
+                    <h1>GIKONKO TSS</h1>
+                    <p>Student Management System</p>
                 </div>
+
             </a>
 
-            <nav class="hidden lg:flex items-center gap-1">
+            <nav class="desktop-navigation">
+
                 <?php foreach ($navigation as $item): ?>
                     <?php $active = $currentPage === $item['link']; ?>
 
-                    <a href="<?php echo htmlspecialchars($item['link']); ?>"
-                       class="px-3 py-2 text-sm font-medium rounded-md transition
-                       <?php echo $active
-                           ? 'bg-blue-50 text-blue-700'
-                           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'; ?>">
-                        <?php echo htmlspecialchars($item['name']); ?>
+                    <a
+                        href="<?php echo htmlspecialchars($item['link'], ENT_QUOTES, 'UTF-8'); ?>"
+                        class="nav-link <?php echo $active ? 'active' : ''; ?>"
+                    >
+                        <?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>
                     </a>
+
                 <?php endforeach; ?>
+
             </nav>
 
-            <div class="hidden md:flex items-center gap-4">
+            <div class="account-area desktop-account">
 
-                <div class="text-right">
-                    <p class="text-sm font-semibold text-slate-800">
-                        <?php echo htmlspecialchars($username); ?>
-                    </p>
-                    <p class="text-xs text-slate-500">
-                        <?php echo htmlspecialchars($role); ?>
-                    </p>
+                <div class="account-info">
+                    <p class="account-name"><?php echo $displayName; ?></p>
+                    <p class="account-role"><?php echo $displayRole; ?></p>
                 </div>
 
-                <div class="relative" @click.outside="profileOpen = false">
+                <div class="profile-wrapper">
 
-                    <button @click="profileOpen = !profileOpen"
-                            class="w-10 h-10 rounded-full bg-blue-700 text-white font-semibold flex items-center justify-center hover:bg-blue-800 transition">
-                        <?php echo strtoupper(substr($username, 0, 1)); ?>
+                    <button
+                        type="button"
+                        class="profile-button"
+                        id="profileButton"
+                        aria-label="Open profile menu"
+                        aria-expanded="false"
+                    >
+                        <?php echo htmlspecialchars($avatarLetter, ENT_QUOTES, 'UTF-8'); ?>
                     </button>
 
-                    <div x-show="profileOpen"
-                         x-transition
-                         class="absolute right-0 top-12 w-48 bg-white border border-slate-200 rounded-md shadow-lg py-2 z-50">
+                    <div class="profile-dropdown" id="profileDropdown">
 
-                        <div class="px-4 py-2 border-b border-slate-100">
-                            <p class="text-sm font-semibold text-slate-800">
-                                <?php echo htmlspecialchars($username); ?>
-                            </p>
-                            <p class="text-xs text-slate-500">
-                                <?php echo htmlspecialchars($role); ?>
-                            </p>
+                        <div class="dropdown-user">
+                            <strong><?php echo $displayName; ?></strong>
+                            <span><?php echo $displayRole; ?></span>
                         </div>
 
-                        <a href="logout.php"
-                           onclick="return confirm('Are you sure you want to logout?')"
-                           class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                        <a
+                            href="logout.php"
+                            class="logout-link"
+                            onclick="return confirm('Are you sure you want to logout?')"
+                        >
                             Logout
                         </a>
+
                     </div>
+
                 </div>
+
             </div>
 
-            <button @click="open = !open"
-                    class="lg:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100"
-                    aria-label="Toggle navigation menu">
-                <svg x-show="!open" class="w-6 h-6" fill="none"
-                     stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-
-                <svg x-show="open" x-cloak class="w-6 h-6" fill="none"
-                     stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+            <button
+                type="button"
+                class="mobile-menu-button"
+                id="mobileMenuButton"
+                aria-label="Toggle navigation"
+                aria-expanded="false"
+            >
+                ☰
             </button>
 
         </div>
 
-        <div x-show="open" x-transition class="lg:hidden border-t border-slate-200 py-3">
+        <div class="mobile-navigation" id="mobileNavigation">
 
-            <div class="grid grid-cols-2 gap-2">
+            <nav class="mobile-nav-links">
+
                 <?php foreach ($navigation as $item): ?>
                     <?php $active = $currentPage === $item['link']; ?>
 
-                    <a href="<?php echo htmlspecialchars($item['link']); ?>"
-                       class="px-3 py-2.5 text-sm font-medium rounded-md
-                       <?php echo $active
-                           ? 'bg-blue-50 text-blue-700'
-                           : 'text-slate-600 hover:bg-slate-100'; ?>">
-                        <?php echo htmlspecialchars($item['name']); ?>
+                    <a
+                        href="<?php echo htmlspecialchars($item['link'], ENT_QUOTES, 'UTF-8'); ?>"
+                        class="nav-link <?php echo $active ? 'active' : ''; ?>"
+                    >
+                        <?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>
                     </a>
-                <?php endforeach; ?>
-            </div>
 
-            <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
-                <div>
-                    <p class="text-sm font-semibold text-slate-800">
-                        <?php echo htmlspecialchars($username); ?>
-                    </p>
-                    <p class="text-xs text-slate-500">
-                        <?php echo htmlspecialchars($role); ?>
-                    </p>
+                <?php endforeach; ?>
+
+            </nav>
+
+            <div class="mobile-account">
+
+                <div class="mobile-account-info">
+                    <strong><?php echo $displayName; ?></strong>
+                    <span><?php echo $displayRole; ?></span>
                 </div>
 
-                <a href="logout.php"
-                   onclick="return confirm('Are you sure you want to logout?')"
-                   class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100">
+                <a
+                    href="logout.php"
+                    class="mobile-logout"
+                    onclick="return confirm('Are you sure you want to logout?')"
+                >
                     Logout
                 </a>
+
             </div>
 
         </div>
 
     </div>
-</div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 w-full">
+</header>
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
+<main class="dashboard-main">
+
+    <section class="welcome-section">
 
         <div>
-            <p class="text-sm text-slate-500">
+            <p class="welcome-date">
                 <?php echo date("l, F j, Y"); ?>
             </p>
 
-            <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-1">
-                Welcome back, <?php echo htmlspecialchars($username); ?>!
+            <h2 class="welcome-title">
+                Welcome back, <?php echo $displayName; ?>!
             </h2>
 
-            <p class="text-sm text-slate-500 mt-1">
+            <p class="welcome-description">
                 Manage your trainees, modules, trades and academic results.
             </p>
         </div>
 
-        <div class="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-2 rounded-md self-start">
-            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-            <span class="text-xs font-medium text-green-700">
-                System Active
-            </span>
+        <div class="system-status">
+            <span class="status-dot"></span>
+            System Active
         </div>
+
+    </section>
+
+    <div class="flash-container">
+
+        <?php foreach ($flashMessages as $message): ?>
+
+            <?php if (!empty($message['text'])): ?>
+
+                <div class="flash-message <?php echo $message['type'] === 'success' ? 'flash-success' : 'flash-error'; ?>">
+
+                    <div>
+                        <?php if ($message['type'] === 'success'): ?>
+                            <strong>✓</strong>
+                        <?php else: ?>
+                            <strong>!</strong>
+                        <?php endif; ?>
+
+                        <?php echo htmlspecialchars($message['text'], ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="flash-close"
+                        onclick="this.parentElement.remove()"
+                        aria-label="Dismiss message"
+                    >
+                        &times;
+                    </button>
+
+                </div>
+
+            <?php endif; ?>
+
+        <?php endforeach; ?>
 
     </div>
 
-    <?php foreach ($flashMessages as $message): ?>
-        <?php if (!empty($message['text'])): ?>
+</main>
 
-            <div class="mb-4 px-4 py-3 rounded-md border flex items-start justify-between gap-3
-                <?php echo $message['type'] === 'success'
-                    ? 'bg-green-50 border-green-200 text-green-800'
-                    : 'bg-red-50 border-red-200 text-red-800'; ?>"
-                x-data="{ visible: true }"
-                x-show="visible">
+<script>
+    const mobileMenuButton = document.getElementById('mobileMenuButton');
+    const mobileNavigation = document.getElementById('mobileNavigation');
 
-                <div class="flex items-center gap-2 text-sm">
-                    <?php if ($message['type'] === 'success'): ?>
-                        <span class="font-bold">&#10003;</span>
-                    <?php else: ?>
-                        <span class="font-bold">!</span>
-                    <?php endif; ?>
+    const profileButton = document.getElementById('profileButton');
+    const profileDropdown = document.getElementById('profileDropdown');
 
-                    <?php echo htmlspecialchars($message['text']); ?>
-                </div>
+    mobileMenuButton.addEventListener('click', function () {
+        const isOpen = mobileNavigation.classList.toggle('show');
 
-                <button @click="visible = false"
-                        class="font-bold opacity-60 hover:opacity-100">
-                    &times;
-                </button>
-            </div>
+        mobileMenuButton.setAttribute('aria-expanded', isOpen);
+        mobileMenuButton.textContent = isOpen ? '×' : '☰';
+    });
 
-        <?php endif; ?>
-    <?php endforeach; ?>
+    profileButton.addEventListener('click', function (event) {
+        event.stopPropagation();
 
-</div>
+        const isOpen = profileDropdown.classList.toggle('show');
+
+        profileButton.setAttribute('aria-expanded', isOpen);
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!profileDropdown.contains(event.target) &&
+            !profileButton.contains(event.target)) {
+
+            profileDropdown.classList.remove('show');
+            profileButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            profileDropdown.classList.remove('show');
+            mobileNavigation.classList.remove('show');
+
+            profileButton.setAttribute('aria-expanded', 'false');
+            mobileMenuButton.setAttribute('aria-expanded', 'false');
+            mobileMenuButton.textContent = '☰';
+        }
+    });
+</script>
+
 </body>
 </html>
