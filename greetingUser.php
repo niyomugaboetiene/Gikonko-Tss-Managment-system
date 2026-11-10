@@ -514,11 +514,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                 <div class="hero-grid">
 
                     <div class="hero-content">
-
-                        <span class="hero-label">
-                            GIKONKO TSS Student Portal
-                        </span>
-
                         <h2>
                             Your education journey starts here.
                         </h2>
@@ -531,8 +526,8 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
                         <div class="hero-actions">
 
-                            <a href="studentMarks.php" class="btn btn-primary">
-                                View My Marks
+                            <a href="listOfMarks.php" class="btn btn-primary">
+                                View Marks
 
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round"
