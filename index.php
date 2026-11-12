@@ -1,24 +1,20 @@
 
 <?php
 
-// Start session before producing any HTML output.
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Connect to the database.
 require_once __DIR__ . '/conn.php';
 
 $loginErrorMessage = "";
 $error = "";
 
-// Display login error from another page.
 if (isset($_SESSION['login_error'])) {
     $loginErrorMessage = $_SESSION['login_error'];
     unset($_SESSION['login_error']);
 }
 
-// Handle admin login.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
     $username = trim($_POST['username'] ?? '');
@@ -71,7 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     }
 }
 
-// Escape output safely.
 function e($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
