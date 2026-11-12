@@ -1,3 +1,4 @@
+
 <?php
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -6,16 +7,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/conn.php';
 
-if (
-    !isset($_SESSION['username'])
-) {
+if (!isset($_SESSION['username'])) {
     $_SESSION['login_error'] = "Please login to access this page.";
     header("Location: index.php");
-    exit();
-}
-if (!isset($_SESSION['username'])) {
-    $_SESSION['login_error'] = "Please login to access this page";
-    header("Location:loginStudent.php");
     exit();
 }
 
@@ -25,10 +19,16 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-$username = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
+$username = htmlspecialchars(
+    $_SESSION['username'],
+    ENT_QUOTES,
+    'UTF-8'
+);
+
 $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
