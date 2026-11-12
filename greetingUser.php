@@ -511,7 +511,7 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 <body>
 
     <header>
-        <?php include("DashboardStudent.php"); ?>
+        <?php include("userDashboard.php"); ?>
     </header>
 
     <main class="admin-main">
