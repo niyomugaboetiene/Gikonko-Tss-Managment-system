@@ -12,28 +12,33 @@ if (
     $port <= 0 ||
     $database === "" ||
     $username === "" ||
-    $password === false
+    $password === false ||
+    $password === ""
 ) {
-    error_log("Database environment variables are missing.");
-    die("Database configuration error.");
+    error_log("Database environment variables are missing or incomplete.");
+    http_response_code(500);
+    exit("Database configuration error.");
 }
 
 $conn = mysqli_init();
 
 if (!$conn) {
     error_log("MySQLi initialization failed.");
-    die("Database connection error.");
+    http_response_code(500);
+    exit("Database connection error.");
 }
 
 $caPath = __DIR__ . "/ca.pem";
 
-if (!file_exists($caPath)) {
-    error_log("Aiven CA certificate is missing.");
-    die("Database SSL configuration error.");
+if (!is_file($caPath)) {
+    error_log("Aiven CA certificate not found: " . $caPath);
+    http_response_code(500);
+    exit("Database SSL configuration error.");
 }
 
 mysqli_ssl_set($conn, null, null, $caPath, null, null);
 
+// Connect to Aiven MySQL
 if (!mysqli_real_connect(
     $conn,
     $host,
@@ -45,9 +50,12 @@ if (!mysqli_real_connect(
     MYSQLI_CLIENT_SSL
 )) {
     error_log("Database connection failed: " . mysqli_connect_error());
-    die("Unable to connect to the database.");
+    http_response_code(500);
+    exit("Unable to connect to the database.");
 }
 
-mysqli_set_charset($conn, "utf8mb4");
-
-?>
+if (!mysqli_set_charset($conn, "utf8mb4")) {
+    error_log("Unable to set database character encoding: " . mysqli_error($conn));
+    http_response_code(500);
+    exit("Database configuration error.");
+}

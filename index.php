@@ -1,68 +1,92 @@
 
 <?php
-ob_start();
-session_start();
 
+// Start session before producing any HTML output.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Connect to the database.
 require_once __DIR__ . '/conn.php';
 
 $loginErrorMessage = "";
 $error = "";
 
+// Display login error from another page.
 if (isset($_SESSION['login_error'])) {
     $loginErrorMessage = $_SESSION['login_error'];
     unset($_SESSION['login_error']);
 }
 
-if (isset($_POST['login'])) {
+// Handle admin login.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
     if ($username === '' || $password === '') {
+
         $error = "Please enter your username and password.";
+
     } else {
+
         $sql = "SELECT username, password FROM users WHERE username = ?";
+
         $stmt = mysqli_prepare($conn, $sql);
 
         if (!$stmt) {
+
             error_log("Admin login prepare failed: " . mysqli_error($conn));
             $error = "Unable to process your login. Please try again.";
+
         } else {
+
             mysqli_stmt_bind_param($stmt, "s", $username);
             mysqli_stmt_execute($stmt);
             mysqli_stmt_store_result($stmt);
 
             if (mysqli_stmt_num_rows($stmt) === 1) {
+
                 mysqli_stmt_bind_result($stmt, $dbUsername, $hashedPassword);
                 mysqli_stmt_fetch($stmt);
 
                 if (password_verify($password, $hashedPassword)) {
+
+                    mysqli_stmt_close($stmt);
+
                     session_regenerate_id(true);
 
                     $_SESSION['username'] = $dbUsername;
 
-                    mysqli_stmt_close($stmt);
-
                     header("Location: greetingUser.php");
                     exit();
+
                 }
             }
 
             mysqli_stmt_close($stmt);
+
             $error = "Invalid username or password.";
         }
     }
 }
 
+// Escape output safely.
 function e($value) {
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Admin Login | GIKONKO TSS</title>
+
     <link rel="icon" type="image/png" href="gikonko.png">
 
     <style>
@@ -331,6 +355,7 @@ function e($value) {
     <main class="login-wrapper">
 
         <div class="brand-section">
+
             <div class="brand-icon">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -344,33 +369,43 @@ function e($value) {
 
             <h1>GIKONKO TSS</h1>
             <p>Student Management System</p>
+
         </div>
 
         <section class="login-card">
 
             <div class="form-heading">
+
                 <span class="category">Administration</span>
+
                 <h2>Welcome back</h2>
+
                 <p>
                     Sign in to access the administration dashboard.
                 </p>
+
             </div>
 
             <?php if ($loginErrorMessage !== ''): ?>
+
                 <div class="alert alert-warning">
                     <?php echo e($loginErrorMessage); ?>
                 </div>
+
             <?php endif; ?>
 
             <?php if ($error !== ''): ?>
+
                 <div class="alert alert-error">
                     <?php echo e($error); ?>
                 </div>
+
             <?php endif; ?>
 
             <form method="POST" action="">
 
                 <div class="form-group">
+
                     <label for="username">Username</label>
 
                     <input
@@ -383,12 +418,15 @@ function e($value) {
                         placeholder="Enter your username"
                         class="form-control"
                     >
+
                 </div>
 
                 <div class="form-group">
+
                     <label for="password">Password</label>
 
                     <div class="password-wrapper">
+
                         <input
                             type="password"
                             id="password"
@@ -406,7 +444,9 @@ function e($value) {
                         >
                             Show
                         </button>
+
                     </div>
+
                 </div>
 
                 <button
@@ -447,10 +487,13 @@ function e($value) {
         const togglePassword = document.getElementById("togglePassword");
 
         togglePassword.addEventListener("click", function () {
+
             const isPassword = passwordInput.type === "password";
 
             passwordInput.type = isPassword ? "text" : "password";
+
             this.textContent = isPassword ? "Hide" : "Show";
+
         });
     </script>
 
