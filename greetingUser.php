@@ -1,8 +1,18 @@
 <?php
 
-include("conn.php");
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
+require_once __DIR__ . '/conn.php';
+
+if (
+    !isset($_SESSION['username'])
+) {
+    $_SESSION['login_error'] = "Please login to access this page.";
+    header("Location: index.php");
+    exit();
+}
 if (!isset($_SESSION['username'])) {
     $_SESSION['login_error'] = "Please login to access this page";
     header("Location:loginStudent.php");
