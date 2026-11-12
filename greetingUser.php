@@ -1,18 +1,18 @@
-
 <?php
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 require_once __DIR__ . '/conn.php';
 
+// DOS/Admin authentication
 if (!isset($_SESSION['username'])) {
     $_SESSION['login_error'] = "Please login to access this page.";
     header("Location: index.php");
     exit();
 }
 
+// Prevent caching of protected pages
 header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
 header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -26,13 +26,10 @@ $username = htmlspecialchars(
 );
 
 $initial = strtoupper(substr($_SESSION['username'], 0, 1));
-
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,7 +69,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         }
 
         /* Welcome section */
-
         .welcome-section {
             margin-bottom: 30px;
         }
@@ -101,7 +97,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         }
 
         /* Hero section */
-
         .hero-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -194,7 +189,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         }
 
         /* Administrator account card */
-
         .hero-side {
             background: #f1f5f9;
             padding: 40px;
@@ -313,7 +307,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         }
 
         /* Quick access */
-
         .quick-access {
             margin-top: 35px;
         }
@@ -433,7 +426,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
         }
 
         /* Information message */
-
         .message-card {
             margin-top: 30px;
             padding: 22px;
@@ -520,16 +512,10 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
 
 <body>
 
-    <header>
-        <?php include("userDashboard.php"); ?>
-    </header>
-
     <main class="admin-main">
-
         <div class="dashboard-container">
 
             <div class="welcome-section">
-
                 <p class="current-date">
                     <?php echo date("l, F j, Y"); ?>
                 </p>
@@ -541,15 +527,12 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                 <p>
                     Director of Studies (DOS) Administration Portal.
                 </p>
-
             </div>
 
             <section class="hero-card">
-
                 <div class="hero-grid">
 
                     <div class="hero-content">
-
                         <p class="hero-label">DOS Administration</p>
 
                         <h2>
@@ -564,7 +547,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         </p>
 
                         <div class="hero-actions">
-
                             <a href="Dashboard.php" class="btn btn-primary">
                                 Administration Dashboard
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,17 +558,13 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                             <a href="listOfMarks.php" class="btn btn-secondary">
                                 Manage Marks
                             </a>
-
                         </div>
-
                     </div>
 
                     <div class="hero-side">
-
                         <div class="account-card">
 
                             <div class="account-header">
-
                                 <div>
                                     <p class="account-label">
                                         Administrator Account
@@ -600,13 +578,11 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                                 <div class="account-avatar">
                                     <?php echo htmlspecialchars($initial, ENT_QUOTES, 'UTF-8'); ?>
                                 </div>
-
                             </div>
 
                             <div class="account-details">
 
                                 <div class="account-item">
-
                                     <div class="item-icon icon-green">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -618,11 +594,9 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                                         <h4>Account Active</h4>
                                         <p>Administrator access verified</p>
                                     </div>
-
                                 </div>
 
                                 <div class="account-item">
-
                                     <div class="item-icon icon-blue">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -635,7 +609,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                                         <h4>Academic Administration</h4>
                                         <p>Director of Studies Portal</p>
                                     </div>
-
                                 </div>
 
                             </div>
@@ -647,29 +620,24 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                             </div>
 
                         </div>
-
                     </div>
 
                 </div>
-
             </section>
 
             <section class="quick-access">
 
                 <div class="section-heading">
-
                     <h2>Administrative Quick Access</h2>
 
                     <p>
                         Manage and monitor the main academic activities.
                     </p>
-
                 </div>
 
                 <div class="quick-grid">
 
                     <a href="listOfTrainee.php" class="quick-card">
-
                         <div class="quick-icon blue">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -687,11 +655,9 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         <span class="quick-link">
                             Manage trainees →
                         </span>
-
                     </a>
 
                     <a href="listOfMarks.php" class="quick-card">
-
                         <div class="quick-icon purple">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -709,11 +675,9 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         <span class="quick-link">
                             Manage assessments →
                         </span>
-
                     </a>
 
                     <a href="listOfModule.php" class="quick-card">
-
                         <div class="quick-icon green">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -731,11 +695,9 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         <span class="quick-link">
                             Manage modules →
                         </span>
-
                     </a>
 
                     <a href="listOfTrades.php" class="quick-card">
-
                         <div class="quick-icon orange">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -753,11 +715,9 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         <span class="quick-link">
                             Manage trades →
                         </span>
-
                     </a>
 
                     <a href="greetingUser.php" class="quick-card">
-
                         <div class="quick-icon blue">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -775,7 +735,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         <span class="quick-link">
                             View overview →
                         </span>
-
                     </a>
 
                     <a href="logoutStudent.php"
@@ -799,15 +758,12 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                         <span class="quick-link">
                             Sign out →
                         </span>
-
                     </a>
 
                 </div>
-
             </section>
 
             <div class="message-card">
-
                 <h3>Director of Studies Responsibilities</h3>
 
                 <p>
@@ -816,14 +772,12 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
                     quality education at GIKONKO Technical Secondary School.
                     Your leadership helps every trainee achieve academic success.
                 </p>
-
             </div>
 
         </div>
-
     </main>
 
-    <?php include("footer.php"); ?>
+    <?php include __DIR__ . "/footer.php"; ?>
 
 </body>
 </html>

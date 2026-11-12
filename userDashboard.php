@@ -1,22 +1,45 @@
 <?php
-include("conn.php");
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-if (!isset($_SESSION['Trainee_Id']) || !isset($_SESSION['Firstname'])) {
+require_once __DIR__ . '/conn.php';
+
+// Student authentication
+if (
+    !isset($_SESSION['Trainee_Id']) ||
+    !isset($_SESSION['Firstname'])
+) {
+    $_SESSION['login_error'] = "Please login to access your student account.";
     header("Location: loginStudent.php");
     exit();
 }
 
-$firstname = htmlspecialchars($_SESSION['Firstname'], ENT_QUOTES, 'UTF-8');
-$traineeId = (int)$_SESSION['Trainee_Id'];
+// Prevent caching of protected pages
+header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
+header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+$firstname = htmlspecialchars(
+    $_SESSION['Firstname'],
+    ENT_QUOTES,
+    'UTF-8'
+);
+
+$traineeId = (int) $_SESSION['Trainee_Id'];
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Student Dashboard | GIKONKO TSS</title>
+
     <link rel="icon" type="image/png" href="gikonko.png">
 
     <style>
@@ -147,7 +170,8 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
             background: #b91c1c;
         }
 
-        .mobile-nav {
+        .mobile-nav,
+        .mobile-logout {
             display: none;
         }
 
@@ -349,6 +373,10 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
                 display: none;
             }
 
+            .mobile-logout {
+                display: block;
+            }
+
             .mobile-nav {
                 display: flex;
                 align-items: center;
@@ -438,13 +466,11 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
 <body>
 
     <header class="site-header">
-
         <nav class="nav-container">
 
             <div class="nav-main">
 
                 <a href="userPage.php" class="brand">
-
                     <div class="brand-logo">
                         <img src="gikonko.png" alt="GIKONKO TSS Logo">
                     </div>
@@ -453,7 +479,6 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
                         <h1>GIKONKO TSS</h1>
                         <p>Student Portal</p>
                     </div>
-
                 </a>
 
                 <div class="desktop-nav">
@@ -500,11 +525,9 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
             </div>
 
         </nav>
-
     </header>
 
     <main>
-
         <div class="content-container">
 
             <section class="welcome-card">
@@ -600,12 +623,11 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
             </section>
 
         </div>
-
     </main>
 
     <footer class="site-footer">
         <p>
-            &copy; <?php echo date("Y"); ?> GIKONKO TSS. All rights reserved.
+            © <?php echo date("Y"); ?> GIKONKO TSS. All rights reserved.
         </p>
     </footer>
 
