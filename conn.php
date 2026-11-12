@@ -1,20 +1,22 @@
 
 <?php
 
-// Aiven login credentials
-$config = parse_ini_file(__DIR__ . "/.env", false, INI_SCANNER_RAW);
+$host = getenv("DB_HOST") ?: "";
+$port = (int) (getenv("DB_PORT") ?: 0);
+$database = getenv("DB_NAME") ?: "";
+$username = getenv("DB_USER") ?: "";
+$password = getenv("DB_PASSWORD");
 
-if ($config === false) {
-    error_log("Database configuration file could not be loaded.");
+if (
+    $host === "" ||
+    $port <= 0 ||
+    $database === "" ||
+    $username === "" ||
+    $password === false
+) {
+    error_log("Database environment variables are missing.");
     die("Database configuration error.");
 }
-
-$host = $config["DB_HOST"] ?? "";
-$port = (int) ($config["DB_PORT"] ?? 0);
-$database = $config["DB_NAME"] ?? "";
-$username = $config["DB_USER"] ?? "";
-$password = $config["DB_PASSWORD"] ?? "";
-$caPath = $config["DB_SSL_CA"] ?? "";
 
 $conn = mysqli_init();
 
@@ -23,12 +25,14 @@ if (!$conn) {
     die("Database connection error.");
 }
 
-// configure SSL
-if (!empty($caPath)) {
-    mysqli_ssl_set($conn, null, null, $caPath, null, null);
+$caPath = __DIR__ . "/ca.pem";
+
+if (!file_exists($caPath)) {
+    error_log("Aiven CA certificate is missing.");
+    die("Database SSL configuration error.");
 }
 
-$flags = MYSQLI_CLIENT_SSL;
+mysqli_ssl_set($conn, null, null, $caPath, null, null);
 
 if (!mysqli_real_connect(
     $conn,
@@ -38,10 +42,12 @@ if (!mysqli_real_connect(
     $database,
     $port,
     null,
-    $flags
+    MYSQLI_CLIENT_SSL
 )) {
     error_log("Database connection failed: " . mysqli_connect_error());
     die("Unable to connect to the database.");
 }
+
+mysqli_set_charset($conn, "utf8mb4");
 
 ?>
