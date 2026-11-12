@@ -3,3 +3,10 @@
 .env
 .DS_Store
 *.log
+
+.env.*
+.git
+.gitignore
+node_modules
+.vercel
+*.sql
