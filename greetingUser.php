@@ -5,14 +5,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/conn.php';
 
-// DOS/Admin authentication
 if (!isset($_SESSION['username'])) {
     $_SESSION['login_error'] = "Please login to access this page.";
     header("Location: index.php");
     exit();
 }
 
-// Prevent caching of protected pages
 header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
 header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -68,7 +66,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             margin: 0 auto;
         }
 
-        /* Welcome section */
         .welcome-section {
             margin-bottom: 30px;
         }
@@ -96,7 +93,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             margin-top: 9px;
         }
 
-        /* Hero section */
         .hero-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -306,7 +302,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             font-size: 11px;
         }
 
-        /* Quick access */
         .quick-access {
             margin-top: 35px;
         }
@@ -425,7 +420,6 @@ $initial = strtoupper(substr($_SESSION['username'], 0, 1));
             color: #dc2626;
         }
 
-        /* Information message */
         .message-card {
             margin-top: 30px;
             padding: 22px;

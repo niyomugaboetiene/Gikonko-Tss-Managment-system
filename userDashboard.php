@@ -5,7 +5,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/conn.php';
 
-// Student authentication
 if (
     !isset($_SESSION['Trainee_Id']) ||
     !isset($_SESSION['Firstname'])
@@ -15,7 +14,6 @@ if (
     exit();
 }
 
-// Prevent caching of protected pages
 header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
 header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -58,7 +56,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        /* Navigation */
         .site-header {
             position: fixed;
             top: 0;
@@ -359,7 +356,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
             font-size: 13px;
         }
 
-        /* Responsive design */
         @media (max-width: 768px) {
             .nav-container {
                 padding: 0 18px;
