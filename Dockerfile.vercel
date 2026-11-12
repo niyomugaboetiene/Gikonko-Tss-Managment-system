@@ -1,10 +1,20 @@
 
-FROM dunglas/frankenphp:1-php8.3
+FROM php:8.3-apache
 
-RUN install-php-extensions mysqli
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libzip-dev \
+    && docker-php-ext-install mysqli pdo pdo_mysql \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /var/www/html
 
-COPY . /app
+COPY . /var/www/html/
 
-ENV SERVER_NAME=:80
+RUN chown -R www-data:www-data /var/www/html
+
+ENV PORT=80
+
+EXPOSE 80
+
+CMD ["apache2-foreground"]
