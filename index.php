@@ -1,7 +1,8 @@
 
 <?php
-include('conn.php');
 session_start();
+
+require_once __DIR__ . '/conn.php';
 
 $loginErrorMessage = "";
 $error = "";
@@ -35,9 +36,11 @@ if (isset($_POST['login'])) {
 
                 if (password_verify($password, $hashedPassword)) {
                     session_regenerate_id(true);
+
                     $_SESSION['username'] = $dbUsername;
 
                     mysqli_stmt_close($stmt);
+
                     header("Location: greetingUser.php");
                     exit();
                 }
@@ -53,7 +56,6 @@ function e($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -347,9 +349,7 @@ function e($value) {
 
             <div class="form-heading">
                 <span class="category">Administration</span>
-
                 <h2>Welcome back</h2>
-
                 <p>
                     Sign in to access the administration dashboard.
                 </p>
@@ -436,7 +436,7 @@ function e($value) {
         </section>
 
         <p class="footer-text">
-            &copy; <?php echo date("Y"); ?> GIKONKO TSS. All rights reserved.
+            © <?php echo date("Y"); ?> GIKONKO TSS. All rights reserved.
         </p>
 
     </main>
