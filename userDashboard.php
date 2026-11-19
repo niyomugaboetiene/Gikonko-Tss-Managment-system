@@ -1,3 +1,4 @@
+
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -31,13 +32,10 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Student Dashboard | GIKONKO TSS</title>
-
     <link rel="icon" type="image/png" href="gikonko.png">
 
     <style>
@@ -172,7 +170,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
             display: none;
         }
 
-        /* Main content */
         main {
             flex: 1;
             width: 100%;
@@ -184,7 +181,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
             margin: 0 auto;
         }
 
-        /* Welcome section */
         .welcome-card {
             position: relative;
             overflow: hidden;
@@ -248,7 +244,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
             font-weight: 800;
         }
 
-        /* Dashboard cards */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -342,7 +337,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
             border-radius: 50%;
         }
 
-        /* Footer */
         .site-footer {
             margin-top: auto;
             padding: 22px 16px;
@@ -460,12 +454,9 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
 </head>
 
 <body>
-
     <header class="site-header">
         <nav class="nav-container">
-
             <div class="nav-main">
-
                 <a href="userPage.php" class="brand">
                     <div class="brand-logo">
                         <img src="gikonko.png" alt="GIKONKO TSS Logo">
@@ -478,7 +469,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
                 </a>
 
                 <div class="desktop-nav">
-
                     <a href="userPage.php" class="nav-link active">
                         Dashboard
                     </a>
@@ -494,7 +484,6 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
                         Logout
                         <span aria-hidden="true">→</span>
                     </a>
-
                 </div>
 
                 <div class="mobile-logout">
@@ -502,11 +491,9 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
                         Logout
                     </a>
                 </div>
-
             </div>
 
             <div class="mobile-nav">
-
                 <a href="userPage.php" class="nav-link active">
                     Dashboard
                 </a>
@@ -517,17 +504,13 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
                 >
                     My Marks
                 </a>
-
             </div>
-
         </nav>
     </header>
 
     <main>
         <div class="content-container">
-
             <section class="welcome-card">
-
                 <p class="welcome-label">
                     Student Dashboard
                 </p>
@@ -546,13 +529,10 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
                     <span>Trainee Code:</span>
                     <span><?php echo $traineeId; ?></span>
                 </div>
-
             </section>
 
             <section class="dashboard-grid">
-
                 <div class="dashboard-card">
-
                     <div class="card-icon icon-blue">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -582,11 +562,9 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
                         View Results
                         <span aria-hidden="true">→</span>
                     </a>
-
                 </div>
 
                 <div class="dashboard-card">
-
                     <div class="card-icon icon-green">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -613,11 +591,8 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
                         <span class="status-dot"></span>
                         Account Active
                     </span>
-
                 </div>
-
             </section>
-
         </div>
     </main>
 
@@ -626,6 +601,5 @@ $traineeId = (int) $_SESSION['Trainee_Id'];
             © <?php echo date("Y"); ?> GIKONKO TSS. All rights reserved.
         </p>
     </footer>
-
 </body>
 </html>
