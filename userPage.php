@@ -1,14 +1,23 @@
 <?php
+
 session_start();
-include("conn.php");
+
+require_once("conn.php");
 
 if (!isset($_SESSION['Trainee_Id']) || !isset($_SESSION['Firstname'])) {
     header("Location: loginStudent.php");
     exit();
 }
 
+header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
+header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
 $firstname = htmlspecialchars($_SESSION['Firstname'], ENT_QUOTES, 'UTF-8');
-$traineeId = (int)$_SESSION['Trainee_Id'];
+$traineeId = (int) $_SESSION['Trainee_Id'];
+
 ?>
 
 <!DOCTYPE html>
@@ -357,9 +366,9 @@ $traineeId = (int)$_SESSION['Trainee_Id'];
 
 <body>
 
-    <header>
-        <?php include("userDashboard.php"); ?>
-    </header>
+    <!-- <header>
+        <?php // include("userDashboard.php"); ?>
+    </header> -->
 
     <main>
 
